@@ -460,6 +460,7 @@ static default_t	doom_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(joyb_fire),
+    CONFIG_VARIABLE_INT(joyb_fire2),
 
     //!
     // Joystick virtual button that makes the player strafe while
@@ -1239,6 +1240,14 @@ static default_t extra_defaults_list[] =
 
     CONFIG_VARIABLE_INT(joystick_physical_button10),
 
+    CONFIG_VARIABLE_INT(joystick_physical_button11),
+    CONFIG_VARIABLE_INT(joystick_physical_button12),
+    CONFIG_VARIABLE_INT(joystick_physical_button13),
+    CONFIG_VARIABLE_INT(joystick_physical_button14),
+    CONFIG_VARIABLE_INT(joystick_physical_button15),
+    CONFIG_VARIABLE_INT(joystick_physical_button16),
+    CONFIG_VARIABLE_INT(joystick_physical_button17),
+
     //!
     // Joystick virtual button to make the player strafe left.
     //
@@ -1256,6 +1265,8 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(joyb_menu_activate),
+
+    CONFIG_VARIABLE_INT(joyb_menu_back),
 
     //!
     // Joystick virtual button to toggle the automap.

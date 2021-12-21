@@ -152,9 +152,15 @@ extern int mousebinvleft;
 extern int mousebinvright;
 
 extern int joybfire;
+extern int joybfire2;
 extern int joybstrafe;
 extern int joybuse;
 extern int joybspeed;
+
+extern int joybup;
+extern int joybdown;
+extern int joybleft;
+extern int joybright;
 
 extern int joybjump;
 
@@ -165,6 +171,7 @@ extern int joybprevweapon;
 extern int joybnextweapon;
 
 extern int joybmenu;
+extern int joybback;
 extern int joybautomap;
 
 extern int dclick_use;

@@ -489,7 +489,7 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
         cmd->buttons2 |= BT2_JUMP;
  
     // villsa [STRIFE]: Moved mousebuttons[mousebfire] to below
-    if (gamekeydown[key_fire] || joybuttons[joybfire]) 
+    if (gamekeydown[key_fire] || joybuttons[joybfire] || joybuttons[joybfire2]) 
         cmd->buttons |= BT_ATTACK;
 
     // villsa [STRIFE]

@@ -1197,6 +1197,11 @@ boolean MN_Responder(event_t * event)
             MN_ActivateMenu();
             return true;
         }
+        if (joybback >= 0 && (event->data1 & (1 << joybback)) != 0)
+        {
+            MN_ActivateMenu();
+            return true;
+        }
     }
 
     // Only care about keypresses beyond this point.

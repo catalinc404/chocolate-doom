@@ -1,0 +1,52 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Run Doom2",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/game/doom2/chocolate-doom",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/game/doom2",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "copydoom2exe",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+
+        {
+            "name": "Run Doom1",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/game/doom1/chocolate-doom",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/game/doom1",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "copydoomexe",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+    ]
+}

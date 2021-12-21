@@ -450,7 +450,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     cmd->chatchar = CT_dequeueChatChar();
 
     if (gamekeydown[key_fire] || mousebuttons[mousebfire]
-        || joybuttons[joybfire])
+        || joybuttons[joybfire] || joybuttons[joybfire2])
         cmd->buttons |= BT_ATTACK;
 
     if (gamekeydown[key_use] || joybuttons[joybuse] || mousebuttons[mousebuse])

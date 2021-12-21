@@ -1,0 +1,2 @@
+#ODROID GoSuper
+190000004b4800000011000000010000,GO-Super Gamepad,platform:Linux,a:b1,b:b0,x:b3,y:b2,back:b12,guide:b16,start:b13,leftshoulder:b4,rightshoulder:b5,dpup:b8,dpdown:b9,dpleft:b10,dpright:b11,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:b6,righttrigger:b7,

@@ -192,21 +192,28 @@ int key_menu_screenshot = 0;
 // Joystick controls
 //
 
-int joybfire = 0;
-int joybstrafe = 1;
-int joybuse = 3;
-int joybspeed = 2;
+int joybfire = 1;           //A
+int joybstrafe = -1;    
+int joybuse = 0;            //B
+int joybfire2 = 5;          //RIGHT SHOULDER
+int joybspeed = 7;          //RIGHT TRIGGER
 
 int joybstrafeleft = -1;
 int joybstraferight = -1;
 
-int joybjump = -1;
+int joybjump = 4;           //LEFT SHOULDER
 
-int joybprevweapon = -1;
-int joybnextweapon = -1;
+int joybprevweapon = 3;     //Y 
+int joybnextweapon = 2;     //X
 
-int joybmenu = -1;
-int joybautomap = -1;
+int joybmenu = 13;          //START
+int joybback = 12;          //BACK
+int joybautomap = 6;        //LEFT TRIGGER
+
+int joybup = 8;
+int joybdown = 9;
+int joybleft = 10;
+int joybright = 11;
 
 // Control whether if a mouse button is double clicked, it acts like 
 // "use" has been pressed
@@ -235,11 +242,13 @@ void M_BindBaseControls(void)
     M_BindIntVariable("mouseb_forward",     &mousebforward);
 
     M_BindIntVariable("joyb_fire",          &joybfire);
+    M_BindIntVariable("joyb_fire2",         &joybfire2);
     M_BindIntVariable("joyb_strafe",        &joybstrafe);
     M_BindIntVariable("joyb_use",           &joybuse);
     M_BindIntVariable("joyb_speed",         &joybspeed);
 
     M_BindIntVariable("joyb_menu_activate", &joybmenu);
+    M_BindIntVariable("joyb_menu_back",     &joybback);
     M_BindIntVariable("joyb_toggle_automap", &joybautomap);
 
     // Extra controls that are not in the Vanilla versions:

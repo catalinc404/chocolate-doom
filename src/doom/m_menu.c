@@ -77,7 +77,7 @@ int			showMessages = 1;
 
 // Blocky mode, has default, 0 = high, 1 = normal
 int			detailLevel = 0;
-int			screenblocks = 9;
+int			screenblocks = 10;
 
 // temp for screenblocks (0-9)
 int			screenSize;
@@ -1434,6 +1434,27 @@ boolean M_Responder (event_t* ev)
 #define JOY_BUTTON_MAPPED(x) ((x) >= 0)
 #define JOY_BUTTON_PRESSED(x) (JOY_BUTTON_MAPPED(x) && (ev->data1 & (1 << (x))) != 0)
 
+            if (JOY_BUTTON_PRESSED(joybup))
+            {
+                key = key_menu_up;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybdown))
+            {
+                key = key_menu_down;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybleft))
+            {
+                key = key_menu_left;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybright))
+            {
+                key = key_menu_right;
+                joywait = I_GetTime() + 5;
+            }
+
             if (JOY_BUTTON_PRESSED(joybfire))
             {
                 // Simulate a 'Y' keypress when Doom show a Y/N dialog with Fire button.
@@ -1479,6 +1500,11 @@ boolean M_Responder (event_t* ev)
         if (JOY_BUTTON_PRESSED(joybmenu))
         {
             key = key_menu_activate;
+            joywait = I_GetTime() + 5;
+        }
+        if ((joybback >= 0) && (JOY_BUTTON_PRESSED(joybback)))
+        {
+            key = key_menu_back;
             joywait = I_GetTime() + 5;
         }
     }

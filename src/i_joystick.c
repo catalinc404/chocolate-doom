@@ -42,16 +42,16 @@ static SDL_Joystick *joystick = NULL;
 
 // Standard default.cfg Joystick enable/disable
 
-static int usejoystick = 0;
+static int usejoystick = 1;
 
 // SDL GUID and index of the joystick to use.
-static char *joystick_guid = "";
+static char *joystick_guid = "190000004b4800000011000000010000";
 static int joystick_index = -1;
 
 // Which joystick axis to use for horizontal movement, and whether to
 // invert the direction:
 
-static int joystick_x_axis = 0;
+static int joystick_x_axis = 2;
 static int joystick_x_invert = 0;
 
 // Which joystick axis to use for vertical movement, and whether to
@@ -62,18 +62,19 @@ static int joystick_y_invert = 0;
 
 // Which joystick axis to use for strafing?
 
-static int joystick_strafe_axis = -1;
+static int joystick_strafe_axis = 0;
 static int joystick_strafe_invert = 0;
 
 // Which joystick axis to use for looking?
 
-static int joystick_look_axis = -1;
+static int joystick_look_axis = 3;
 static int joystick_look_invert = 0;
 
 // Virtual to physical button joystick button mapping. By default this
 // is a straight mapping.
-static int joystick_physical_buttons[NUM_VIRTUAL_BUTTONS] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+static int joystick_physical_buttons[NUM_VIRTUAL_BUTTONS] = 
+{
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
 };
 
 void I_ShutdownJoystick(void)
