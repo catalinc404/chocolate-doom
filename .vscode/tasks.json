@@ -48,7 +48,25 @@
             "type": "shell",
             "command": "cp",
             "args": ["./src/chocolate-doom", "./game/doom1/"],
-        }  
+        },
+        {
+            "label": "copystrifeexe",
+            "type": "shell",
+            "command": "cp",
+            "args": ["./src/chocolate-strife", "./game/strife/"],
+        },
+        {
+            "label": "copyhereticexe",
+            "type": "shell",
+            "command": "cp",
+            "args": ["./src/chocolate-heretic", "./game/heretic/"],
+        },
+        {
+            "label": "copyhexenexe",
+            "type": "shell",
+            "command": "cp",
+            "args": ["./src/chocolate-hexen", "./game/hexen/"],
+        },
     ],
     "version": "2.0.0"
 }
