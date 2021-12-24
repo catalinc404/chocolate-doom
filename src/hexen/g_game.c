@@ -143,6 +143,7 @@ static int *weapon_keys[] =
 static int next_weapon = 0;
 
 #define SLOWTURNTICS    6
+#define SLOWLOOkTICS    25
 
 #define NUMKEYS 256
 boolean gamekeydown[NUMKEYS];
@@ -257,13 +258,13 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     {
         lookheld = 0;
     }
-    if (lookheld < SLOWTURNTICS)
+    if (lookheld < SLOWLOOkTICS)
     {
-        lspeed = 1;             // 3;
+        lspeed = 0;             // 3;
     }
     else
     {
-        lspeed = 2;             // 5;
+        lspeed = 1;             // 5;
     }
 
 //

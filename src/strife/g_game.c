@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "doomdef.h" 
+#include "doomdef.h"
 #include "doomkeys.h"
 #include "doomstat.h"
 
@@ -52,7 +52,7 @@
 
 #include "w_wad.h"
 
-#include "p_local.h" 
+#include "p_local.h"
 
 #include "s_sound.h"
 
@@ -64,98 +64,97 @@
 #include "r_data.h"
 #include "r_sky.h"
 
-#include "p_dialog.h"   // villsa [STRIFE]
+#include "p_dialog.h" // villsa [STRIFE]
 
 #include "g_game.h"
 
+#define SAVEGAMESIZE 0x2c000
 
-#define SAVEGAMESIZE	0x2c000
+void G_ReadDemoTiccmd(ticcmd_t *cmd);
+void G_WriteDemoTiccmd(ticcmd_t *cmd);
+void G_PlayerReborn(int player);
 
-void	G_ReadDemoTiccmd (ticcmd_t* cmd); 
-void	G_WriteDemoTiccmd (ticcmd_t* cmd); 
-void	G_PlayerReborn (int player); 
- 
-void	G_DoReborn (int playernum); 
- 
-void	G_DoLoadLevel (void); 
-void	G_DoNewGame (void); 
-void	G_DoPlayDemo (void); 
-void	G_DoCompleted (void); 
-void	G_DoVictory (void); 
-void	G_DoWorldDone (void); 
-void	G_DoSaveGame (char *path); 
- 
+void G_DoReborn(int playernum);
+
+void G_DoLoadLevel(void);
+void G_DoNewGame(void);
+void G_DoPlayDemo(void);
+void G_DoCompleted(void);
+void G_DoVictory(void);
+void G_DoWorldDone(void);
+void G_DoSaveGame(char *path);
+
 // Gamestate the last time G_Ticker was called.
 
-gamestate_t     oldgamestate; 
- 
-gameaction_t    gameaction; 
-gamestate_t     gamestate; 
-skill_t         gameskill = 2; // [STRIFE] Default value set to 2.
-boolean         respawnmonsters;
-//int             gameepisode; 
-int             gamemap;
+gamestate_t oldgamestate;
+
+gameaction_t gameaction;
+gamestate_t gamestate;
+skill_t gameskill = 2; // [STRIFE] Default value set to 2.
+boolean respawnmonsters;
+//int             gameepisode;
+int gamemap;
 
 // haleyjd 08/24/10: [STRIFE] New variables
-int             destmap;   // current destination map when exiting
-int             riftdest;  // destination spot for player
-angle_t         riftangle; // player angle saved during exit
+int destmap;       // current destination map when exiting
+int riftdest;      // destination spot for player
+angle_t riftangle; // player angle saved during exit
 
 // If non-zero, exit the level after this number of minutes.
 
-int             timelimit;
+int timelimit;
 
-boolean         paused; 
-boolean         sendpause;              // send a pause event next tic 
-boolean         sendsave;               // send a save event next tic 
-boolean         usergame;               // ok to save / end game 
- 
-boolean         timingdemo;             // if true, exit with report on completion 
-boolean         nodrawers;              // for comparative timing purposes 
-int             starttime;              // for comparative timing purposes 
- 
-boolean         viewactive; 
- 
-int             deathmatch;             // only if started as net death 
-boolean         netgame;                // only true if packets are broadcast 
-boolean         playeringame[MAXPLAYERS]; 
-player_t        players[MAXPLAYERS]; 
+boolean paused;
+boolean sendpause; // send a pause event next tic
+boolean sendsave;  // send a save event next tic
+boolean usergame;  // ok to save / end game
 
-boolean         turbodetected[MAXPLAYERS];
- 
-int             consoleplayer;          // player taking events and displaying 
-int             displayplayer;          // view being displayed 
-int             levelstarttic;          // gametic at level start 
-int             totalkills, /*totalitems,*/ totalsecret;    // for intermission 
- 
-char           *demoname;
-boolean         demorecording; 
-boolean         longtics;               // cph's doom 1.91 longtics hack
-boolean         lowres_turn;            // low resolution turning for longtics
-boolean         demoplayback; 
-boolean		netdemo; 
-byte*		demobuffer;
-byte*		demo_p;
-byte*		demoend; 
-boolean         singledemo;             // quit after playing a demo from cmdline 
- 
-boolean         precache = true;        // if true, load all graphics at start 
+boolean timingdemo; // if true, exit with report on completion
+boolean nodrawers;  // for comparative timing purposes
+int starttime;      // for comparative timing purposes
 
-boolean         testcontrols = false;    // Invoked by setup to test controls
- 
-wbstartstruct_t wminfo;                 // parms for world map / intermission 
- 
-byte            consistancy[MAXPLAYERS][BACKUPTICS]; 
- 
-#define MAXPLMOVE		(forwardmove[1]) 
- 
-#define TURBOTHRESHOLD	0x32
+boolean viewactive;
 
-fixed_t         forwardmove[2] = {0x19, 0x32}; 
-fixed_t         sidemove[2] = {0x18, 0x28}; 
-fixed_t         angleturn[3] = {640, 1280, 320};    // + slow turn 
+int deathmatch;  // only if started as net death
+boolean netgame; // only true if packets are broadcast
+boolean playeringame[MAXPLAYERS];
+player_t players[MAXPLAYERS];
 
-int mouse_fire_countdown = 0;    // villsa [STRIFE]
+boolean turbodetected[MAXPLAYERS];
+
+int consoleplayer;                           // player taking events and displaying
+int displayplayer;                           // view being displayed
+int levelstarttic;                           // gametic at level start
+int totalkills, /*totalitems,*/ totalsecret; // for intermission
+
+char *demoname;
+boolean demorecording;
+boolean longtics;    // cph's doom 1.91 longtics hack
+boolean lowres_turn; // low resolution turning for longtics
+boolean demoplayback;
+boolean netdemo;
+byte *demobuffer;
+byte *demo_p;
+byte *demoend;
+boolean singledemo; // quit after playing a demo from cmdline
+
+boolean precache = true; // if true, load all graphics at start
+
+boolean testcontrols = false; // Invoked by setup to test controls
+
+wbstartstruct_t wminfo; // parms for world map / intermission
+
+byte consistancy[MAXPLAYERS][BACKUPTICS];
+
+#define MAXPLMOVE (forwardmove[1])
+
+#define TURBOTHRESHOLD 0x32
+
+fixed_t forwardmove[2] = {0x19, 0x32};
+fixed_t sidemove[2] = {0x18, 0x28};
+fixed_t angleturn[3] = {640, 1280, 320}; // + slow turn
+
+int mouse_fire_countdown = 0; // villsa [STRIFE]
 
 static int *weapon_keys[] = {
     &key_weapon1,
@@ -165,8 +164,7 @@ static int *weapon_keys[] = {
     &key_weapon5,
     &key_weapon6,
     &key_weapon7,
-    &key_weapon8
-};
+    &key_weapon8};
 
 // Set to -1 or +1 to switch to the previous or next weapon.
 
@@ -180,73 +178,73 @@ static const struct
     weapontype_t weapon;
     weapontype_t weapon_num;
 } weapon_order_table[] = {
-    { wp_fist,                  wp_fist },
-    { wp_poisonbow,             wp_elecbow },
-    { wp_elecbow,               wp_elecbow },
-    { wp_rifle,                 wp_rifle },
-    { wp_missile,               wp_missile },
-    { wp_wpgrenade,             wp_hegrenade },
-    { wp_hegrenade,             wp_hegrenade },
-    { wp_flame,                 wp_flame },
-    { wp_torpedo,               wp_mauler },
-    { wp_mauler,                wp_mauler },
-    { wp_sigil,                 wp_sigil },
+    {wp_fist, wp_fist},
+    {wp_poisonbow, wp_elecbow},
+    {wp_elecbow, wp_elecbow},
+    {wp_rifle, wp_rifle},
+    {wp_missile, wp_missile},
+    {wp_wpgrenade, wp_hegrenade},
+    {wp_hegrenade, wp_hegrenade},
+    {wp_flame, wp_flame},
+    {wp_torpedo, wp_mauler},
+    {wp_mauler, wp_mauler},
+    {wp_sigil, wp_sigil},
 };
 
-#define SLOWTURNTICS	6 
- 
-#define NUMKEYS		256 
+#define SLOWTURNTICS 6
+#define SLOWLOOKTICS 2500
+
+#define NUMKEYS 256
 #define MAX_JOY_BUTTONS 20
 
-static boolean  gamekeydown[NUMKEYS]; 
-static int      turnheld;		// for accelerative turning 
- 
-static boolean  mousearray[MAX_MOUSE_BUTTONS + 1];
-static boolean *mousebuttons = &mousearray[1];  // allow [-1]
+static boolean gamekeydown[NUMKEYS];
+static int turnheld; // for accelerative turning
 
-// mouse values are used once 
-int             mousex;
-int             mousey;         
+static boolean mousearray[MAX_MOUSE_BUTTONS + 1];
+static boolean *mousebuttons = &mousearray[1]; // allow [-1]
 
-static int      dclicktime;
-static boolean  dclickstate;
-static int      dclicks; 
-static int      dclicktime2;
-static boolean  dclickstate2;
-static int      dclicks2;
+// mouse values are used once
+int mousex;
+int mousey;
 
-// joystick values are repeated 
-static int      joyxmove;
-static int      joyymove;
-static int      joystrafemove;
-static int      joylook;
-static boolean  joyarray[MAX_JOY_BUTTONS + 1]; 
-static boolean *joybuttons = &joyarray[1];		// allow [-1] 
- 
-static int      savegameslot = 6; // [STRIFE] initialized to 6
-static char     savedescription[32]; 
- 
-int      testcontrols_mousespeed;
- 
-#define	BODYQUESIZE	32
+static int dclicktime;
+static boolean dclickstate;
+static int dclicks;
+static int dclicktime2;
+static boolean dclickstate2;
+static int dclicks2;
 
-mobj_t*		bodyque[BODYQUESIZE]; 
+// joystick values are repeated
+static int joyxmove;
+static int joyymove;
+static int joystrafemove;
+static int joylook;
+static boolean joyarray[MAX_JOY_BUTTONS + 1];
+static boolean *joybuttons = &joyarray[1]; // allow [-1]
+
+static int savegameslot = 6; // [STRIFE] initialized to 6
+static char savedescription[32];
+
+int testcontrols_mousespeed;
+
+#define BODYQUESIZE 32
+
+mobj_t *bodyque[BODYQUESIZE];
 //int       bodyqueslot; [STRIFE] unused
- 
-int             vanilla_savegame_limit = 1;
-int             vanilla_demo_limit = 1;
- 
 
-int G_CmdChecksum (ticcmd_t* cmd) 
-{ 
-    size_t		i;
-    int		sum = 0; 
-	 
-    for (i=0 ; i< sizeof(*cmd)/4 - 1 ; i++) 
-	sum += ((int *)cmd)[i]; 
-		 
-    return sum; 
-} 
+int vanilla_savegame_limit = 1;
+int vanilla_demo_limit = 1;
+
+int G_CmdChecksum(ticcmd_t *cmd)
+{
+    size_t i;
+    int sum = 0;
+
+    for (i = 0; i < sizeof(*cmd) / 4 - 1; i++)
+        sum += ((int *)cmd)[i];
+
+    return sum;
+}
 
 static boolean WeaponSelectable(weapontype_t weapon)
 {
@@ -273,8 +271,7 @@ static boolean WeaponSelectable(weapontype_t weapon)
 
     // haleyjd 20141024: same fix here as in P_PlayerThink for torpedo.
 
-    if (weapon == wp_torpedo
-     && player->ammo[weaponinfo[wp_torpedo].ammo] < 30)
+    if (weapon == wp_torpedo && player->ammo[weaponinfo[wp_torpedo].ammo] < 30)
     {
         return false;
     }
@@ -303,7 +300,7 @@ static int G_NextWeapon(int direction)
         weapon = players[consoleplayer].pendingweapon;
     }
 
-    for (i=0; i<arrlen(weapon_order_table); ++i)
+    for (i = 0; i < arrlen(weapon_order_table); ++i)
     {
         if (weapon_order_table[i].weapon == weapon)
         {
@@ -325,37 +322,37 @@ static int G_NextWeapon(int direction)
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
-// or reads it from the demo buffer. 
-// If recording a demo, write it out 
-// 
-void G_BuildTiccmd (ticcmd_t* cmd, int maketic) 
-{ 
-    int		i; 
-    boolean	strafe;
-    boolean	bstrafe; 
-    int		speed;
-    int		tspeed; 
-    int		forward;
-    int		side;
+// or reads it from the demo buffer.
+// If recording a demo, write it out
+//
+void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
+{
+    int i;
+    boolean strafe;
+    boolean bstrafe;
+    int speed;
+    int tspeed;
+    int forward;
+    int side;
 
     memset(cmd, 0, sizeof(ticcmd_t));
 
-    cmd->consistancy = 
-        consistancy[consoleplayer][maketic%BACKUPTICS]; 
+    cmd->consistancy =
+        consistancy[consoleplayer][maketic % BACKUPTICS];
 
     // villsa [STRIFE] look up key
-    if(gamekeydown[key_lookup] || joylook < 0)
+    if (gamekeydown[key_lookup] || joylook < 0)
         cmd->buttons2 |= BT2_LOOKUP;
 
     // villsa [STRIFE] look down key
-    if(gamekeydown[key_lookdown] || joylook > 0)
+    if (gamekeydown[key_lookdown] || joylook > 0)
         cmd->buttons2 |= BT2_LOOKDOWN;
 
     // villsa [STRIFE] inventory use key
-    if(gamekeydown[key_invuse])
+    if (gamekeydown[key_invuse])
     {
-        player_t* player = &players[consoleplayer];
-        if(player->numinventory > 0)
+        player_t *player = &players[consoleplayer];
+        if (player->numinventory > 0)
         {
             cmd->buttons2 |= BT2_INVUSE;
             cmd->inventory = player->inventory[player->inventorycursor].sprite;
@@ -363,10 +360,10 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     }
 
     // villsa [STRIFE] inventory drop key
-    if(gamekeydown[key_invdrop])
+    if (gamekeydown[key_invdrop])
     {
-        player_t* player = &players[consoleplayer];
-        if(player->numinventory > 0)
+        player_t *player = &players[consoleplayer];
+        if (player->numinventory > 0)
         {
             cmd->buttons2 |= BT2_INVDROP;
             cmd->inventory = player->inventory[player->inventorycursor].sprite;
@@ -374,141 +371,120 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     }
 
     // villsa [STRIFE] use medkit
-    if(gamekeydown[key_usehealth])
+    if (gamekeydown[key_usehealth])
         cmd->buttons2 |= BT2_HEALTH;
 
-
- 
-    strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe] 
-        || joybuttons[joybstrafe]; 
+    strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
 
     // fraggle: support the old "joyb_speed = 31" hack which
     // allowed an autorun effect
 
-    speed = key_speed >= NUMKEYS
-         || joybspeed >= MAX_JOY_BUTTONS
-         || gamekeydown[key_speed] 
-         || joybuttons[joybspeed];
- 
+    speed = key_speed >= NUMKEYS || joybspeed >= MAX_JOY_BUTTONS || gamekeydown[key_speed] || joybuttons[joybspeed];
+
     forward = side = 0;
 
     // villsa [STRIFE] running causes centerview to occur
-    if(speed)
+    if (speed)
         cmd->buttons2 |= BT2_CENTERVIEW;
 
     // villsa [STRIFE] disable running if low on health
     if (players[consoleplayer].health <= 15)
         speed = 0;
-    
+
     // use two stage accelerative turning
     // on the keyboard and joystick
-    if (joyxmove < 0
-        || joyxmove > 0  
-        || gamekeydown[key_right]
-        || gamekeydown[key_left]
-        || mousebuttons[mousebturnright]
-        || mousebuttons[mousebturnleft])
-        turnheld += ticdup; 
-    else 
-        turnheld = 0; 
+    if (joyxmove < 0 || joyxmove > 0 || gamekeydown[key_right] || gamekeydown[key_left] || mousebuttons[mousebturnright] || mousebuttons[mousebturnleft])
+        turnheld += ticdup;
+    else
+        turnheld = 0;
 
-    if (turnheld < SLOWTURNTICS) 
-        tspeed = 2;             // slow turn 
-    else 
+    if (turnheld < SLOWTURNTICS)
+        tspeed = 2; // slow turn
+    else
         tspeed = speed;
-    
+
     // let movement keys cancel each other out
-    if (strafe) 
-    { 
+    if (strafe)
+    {
         if (gamekeydown[key_right] || mousebuttons[mousebturnright])
         {
             // fprintf(stderr, "strafe right\n");
-            side += sidemove[speed]; 
+            side += sidemove[speed];
         }
         if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
         {
             //	fprintf(stderr, "strafe left\n");
-            side -= sidemove[speed]; 
+            side -= sidemove[speed];
         }
-        if (joyxmove > 0) 
-            side += sidemove[speed]; 
-        if (joyxmove < 0) 
-            side -= sidemove[speed]; 
-
-    } 
-    else 
-    { 
+        if (joyxmove > 0)
+            side += sidemove[speed];
+        if (joyxmove < 0)
+            side -= sidemove[speed];
+    }
+    else
+    {
         if (gamekeydown[key_right] || mousebuttons[mousebturnright])
-            cmd->angleturn -= angleturn[tspeed]; 
+            cmd->angleturn -= angleturn[tspeed];
         if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
-            cmd->angleturn += angleturn[tspeed]; 
-        if (joyxmove > 0) 
-            cmd->angleturn -= angleturn[tspeed]; 
-        if (joyxmove < 0) 
-            cmd->angleturn += angleturn[tspeed]; 
-    } 
+            cmd->angleturn += angleturn[tspeed];
+        if (joyxmove > 0)
+            cmd->angleturn -= angleturn[tspeed];
+        if (joyxmove < 0)
+            cmd->angleturn += angleturn[tspeed];
+    }
 
-    if (gamekeydown[key_up]) 
+    if (gamekeydown[key_up])
     {
         // fprintf(stderr, "up\n");
-        forward += forwardmove[speed]; 
+        forward += forwardmove[speed];
     }
-    if (gamekeydown[key_down]) 
+    if (gamekeydown[key_down])
     {
         // fprintf(stderr, "down\n");
-        forward -= forwardmove[speed]; 
+        forward -= forwardmove[speed];
     }
 
-    if (joyymove < 0) 
-        forward += forwardmove[speed]; 
-    if (joyymove > 0) 
-        forward -= forwardmove[speed]; 
+    if (joyymove < 0)
+        forward += forwardmove[speed];
+    if (joyymove > 0)
+        forward -= forwardmove[speed];
 
-    if (gamekeydown[key_strafeleft]
-     || joybuttons[joybstrafeleft]
-     || mousebuttons[mousebstrafeleft]
-     || joystrafemove < 0)
+    if (gamekeydown[key_strafeleft] || joybuttons[joybstrafeleft] || mousebuttons[mousebstrafeleft] || joystrafemove < 0)
     {
         side -= sidemove[speed];
     }
 
-    if (gamekeydown[key_straferight]
-     || joybuttons[joybstraferight]
-     || mousebuttons[mousebstraferight]
-     || joystrafemove > 0)
+    if (gamekeydown[key_straferight] || joybuttons[joybstraferight] || mousebuttons[mousebstraferight] || joystrafemove > 0)
     {
-        side += sidemove[speed]; 
+        side += sidemove[speed];
     }
 
     // buttons
-    cmd->chatchar = HU_dequeueChatChar(); 
+    cmd->chatchar = HU_dequeueChatChar();
 
     // villsa [STRIFE] - add mouse button support for jump
-    if (gamekeydown[key_jump] || mousebuttons[mousebjump]
-     || joybuttons[joybjump])
+    if (gamekeydown[key_jump] || mousebuttons[mousebjump] || joybuttons[joybjump])
         cmd->buttons2 |= BT2_JUMP;
- 
+
     // villsa [STRIFE]: Moved mousebuttons[mousebfire] to below
-    if (gamekeydown[key_fire] || joybuttons[joybfire] || joybuttons[joybfire2]) 
+    if (gamekeydown[key_fire] || joybuttons[joybfire] || joybuttons[joybfire2])
         cmd->buttons |= BT_ATTACK;
 
     // villsa [STRIFE]
-    if(mousebuttons[mousebfire])
+    if (mousebuttons[mousebfire])
     {
-         if(mouse_fire_countdown <= 0)
-             cmd->buttons |= BT_ATTACK;
-         else
-             --mouse_fire_countdown;
+        if (mouse_fire_countdown <= 0)
+            cmd->buttons |= BT_ATTACK;
+        else
+            --mouse_fire_countdown;
     }
- 
-    if (gamekeydown[key_use]
-     || joybuttons[joybuse]
-     || mousebuttons[mousebuse])
-    { 
+
+    if (gamekeydown[key_use] || joybuttons[joybuse] || mousebuttons[mousebuse])
+    {
         cmd->buttons |= BT_USE;
-        // clear double clicks if hit use button 
+        // clear double clicks if hit use button
         dclicks = 0;
-    } 
+    }
 
     // If the previous or next weapon button is pressed, the
     // next_weapon variable is set to change weapons when
@@ -524,14 +500,14 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     {
         // Check weapon keys.
 
-        for (i=0; i<arrlen(weapon_keys); ++i)
+        for (i = 0; i < arrlen(weapon_keys); ++i)
         {
             int key = *weapon_keys[i];
 
             if (gamekeydown[key])
             {
                 cmd->buttons |= BT_CHANGE;
-                cmd->buttons |= i<<BT_WEAPONSHIFT;
+                cmd->buttons |= i << BT_WEAPONSHIFT;
                 break;
             }
         }
@@ -540,7 +516,7 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     next_weapon = 0;
 
     // mouse
-    if (mousebuttons[mousebforward]) 
+    if (mousebuttons[mousebforward])
     {
         forward += forwardmove[speed];
     }
@@ -552,63 +528,62 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     if (dclick_use)
     {
         // forward double click
-        if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1 ) 
-        { 
-            dclickstate = mousebuttons[mousebforward]; 
-            if (dclickstate) 
-                dclicks++; 
-            if (dclicks == 2) 
-            { 
-                cmd->buttons |= BT_USE; 
-                dclicks = 0; 
-            } 
-            else 
-                dclicktime = 0; 
-        } 
-        else 
-        { 
-            dclicktime += ticdup; 
-            if (dclicktime > 20) 
-            { 
-                dclicks = 0; 
-                dclickstate = 0; 
-            } 
+        if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1)
+        {
+            dclickstate = mousebuttons[mousebforward];
+            if (dclickstate)
+                dclicks++;
+            if (dclicks == 2)
+            {
+                cmd->buttons |= BT_USE;
+                dclicks = 0;
+            }
+            else
+                dclicktime = 0;
         }
-        
+        else
+        {
+            dclicktime += ticdup;
+            if (dclicktime > 20)
+            {
+                dclicks = 0;
+                dclickstate = 0;
+            }
+        }
+
         // strafe double click
         bstrafe =
-            mousebuttons[mousebstrafe] 
-            || joybuttons[joybstrafe]; 
-        if (bstrafe != dclickstate2 && dclicktime2 > 1 ) 
-        { 
-            dclickstate2 = bstrafe; 
-            if (dclickstate2) 
-                dclicks2++; 
-            if (dclicks2 == 2) 
-            { 
-                cmd->buttons |= BT_USE; 
-                dclicks2 = 0; 
-            } 
-            else 
-                dclicktime2 = 0; 
-        } 
-        else 
-        { 
-            dclicktime2 += ticdup; 
-            if (dclicktime2 > 20) 
-            { 
-                dclicks2 = 0; 
-                dclickstate2 = 0; 
-            } 
-        } 
+            mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
+        if (bstrafe != dclickstate2 && dclicktime2 > 1)
+        {
+            dclickstate2 = bstrafe;
+            if (dclickstate2)
+                dclicks2++;
+            if (dclicks2 == 2)
+            {
+                cmd->buttons |= BT_USE;
+                dclicks2 = 0;
+            }
+            else
+                dclicktime2 = 0;
+        }
+        else
+        {
+            dclicktime2 += ticdup;
+            if (dclicktime2 > 20)
+            {
+                dclicks2 = 0;
+                dclickstate2 = 0;
+            }
+        }
     }
 
-    forward += mousey; 
+    forward += mousey;
 
-    if (strafe) 
-        side += mousex*2; 
-    else 
-        cmd->angleturn -= mousex*0x8;
+    if (strafe)
+        side += mousex * 2;
+    else
+        cmd->angleturn -= mousex * 0x8;
 
     if (mousex == 0)
     {
@@ -616,33 +591,33 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
 
         testcontrols_mousespeed = 0;
     }
-    
-    mousex = mousey = 0; 
 
-    if (forward > MAXPLMOVE) 
-        forward = MAXPLMOVE; 
-    else if (forward < -MAXPLMOVE) 
-        forward = -MAXPLMOVE; 
-    if (side > MAXPLMOVE) 
-        side = MAXPLMOVE; 
-    else if (side < -MAXPLMOVE) 
-        side = -MAXPLMOVE; 
- 
-    cmd->forwardmove += forward; 
+    mousex = mousey = 0;
+
+    if (forward > MAXPLMOVE)
+        forward = MAXPLMOVE;
+    else if (forward < -MAXPLMOVE)
+        forward = -MAXPLMOVE;
+    if (side > MAXPLMOVE)
+        side = MAXPLMOVE;
+    else if (side < -MAXPLMOVE)
+        side = -MAXPLMOVE;
+
+    cmd->forwardmove += forward;
     cmd->sidemove += side;
-    
+
     // special buttons
-    if (sendpause) 
-    { 
-        sendpause = false; 
-        cmd->buttons = BT_SPECIAL | BTS_PAUSE; 
-    } 
- 
-    if (sendsave) 
-    { 
-        sendsave = false; 
-        cmd->buttons = BT_SPECIAL | BTS_SAVEGAME | (savegameslot<<BTS_SAVESHIFT); 
-    } 
+    if (sendpause)
+    {
+        sendpause = false;
+        cmd->buttons = BT_SPECIAL | BTS_PAUSE;
+    }
+
+    if (sendsave)
+    {
+        sendsave = false;
+        cmd->buttons = BT_SPECIAL | BTS_SAVEGAME | (savegameslot << BTS_SAVESHIFT);
+    }
 
     // low-res turning
 
@@ -663,45 +638,44 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
 
         carry = desired_angleturn - cmd->angleturn;
     }
-} 
- 
+}
 
 //
-// G_DoLoadLevel 
+// G_DoLoadLevel
 //
-void G_DoLoadLevel (void) 
-{ 
-    int             i; 
+void G_DoLoadLevel(void)
+{
+    int i;
 
     // haleyjd 10/03/10: [STRIFE] This is not done here.
     //skyflatnum = R_FlatNumForName(DEH_String(SKYFLATNAME));
 
-    levelstarttic = gametic;        // for time calculation
+    levelstarttic = gametic; // for time calculation
 
-    if (wipegamestate == GS_LEVEL) 
-        wipegamestate = -1;             // force a wipe 
+    if (wipegamestate == GS_LEVEL)
+        wipegamestate = -1; // force a wipe
 
-    gamestate = GS_LEVEL; 
+    gamestate = GS_LEVEL;
 
-    for (i=0 ; i<MAXPLAYERS ; i++) 
-    { 
+    for (i = 0; i < MAXPLAYERS; i++)
+    {
         turbodetected[i] = false;
 
         // haleyjd 20110204 [STRIFE]: PST_REBORN if players[i].health <= 0
         if (playeringame[i] && (players[i].playerstate == PST_DEAD || players[i].health <= 0))
-            players[i].playerstate = PST_REBORN; 
-        memset (players[i].frags,0,sizeof(players[i].frags)); 
-    } 
+            players[i].playerstate = PST_REBORN;
+        memset(players[i].frags, 0, sizeof(players[i].frags));
+    }
 
-    P_SetupLevel (gamemap, 0, gameskill);    
-    displayplayer = consoleplayer;      // view the guy you are playing    
-    starttime = I_GetTime(); // haleyjd 20110204 [STRIFE]
-    gameaction = ga_nothing; 
-    Z_CheckHeap ();
+    P_SetupLevel(gamemap, 0, gameskill);
+    displayplayer = consoleplayer; // view the guy you are playing
+    starttime = I_GetTime();       // haleyjd 20110204 [STRIFE]
+    gameaction = ga_nothing;
+    Z_CheckHeap();
 
     // clear cmd building stuff
 
-    memset (gamekeydown, 0, sizeof(gamekeydown));
+    memset(gamekeydown, 0, sizeof(gamekeydown));
     joyxmove = joyymove = joystrafemove = joylook = 0;
     mousex = mousey = 0;
     sendpause = sendsave = paused = false;
@@ -714,13 +688,13 @@ void G_DoLoadLevel (void)
     }
 
     P_DialogLoad(); // villsa [STRIFE]
-} 
+}
 
 static void SetJoyButtons(unsigned int buttons_mask)
 {
     int i;
 
-    for (i=0; i<MAX_JOY_BUTTONS; ++i)
+    for (i = 0; i < MAX_JOY_BUTTONS; ++i)
     {
         int button_on = (buttons_mask & (1 << i)) != 0;
 
@@ -741,6 +715,23 @@ static void SetJoyButtons(unsigned int buttons_mask)
         }
 
         joybuttons[i] = button_on;
+
+        if (i == joybup)
+        {
+            gamekeydown[key_up] = button_on;
+        }
+        if (i == joybdown)
+        {
+            gamekeydown[key_down] = button_on;
+        }
+        if (i == joybleft)
+        {
+            gamekeydown[key_strafeleft] = button_on;
+        }
+        if (i == joybright)
+        {
+            gamekeydown[key_straferight] = button_on;
+        }
     }
 }
 
@@ -748,7 +739,7 @@ static void SetMouseButtons(unsigned int buttons_mask)
 {
     int i;
 
-    for (i=0; i<MAX_MOUSE_BUTTONS; ++i)
+    for (i = 0; i < MAX_MOUSE_BUTTONS; ++i)
     {
         unsigned int button_on = (buttons_mask & (1 << i)) != 0;
 
@@ -766,76 +757,74 @@ static void SetMouseButtons(unsigned int buttons_mask)
             }
         }
 
-	mousebuttons[i] = button_on;
+        mousebuttons[i] = button_on;
     }
 }
 
 //
-// G_Responder  
+// G_Responder
 // Get info needed to make ticcmd_ts for the players.
-// 
-boolean G_Responder (event_t* ev) 
-{ 
+//
+boolean G_Responder(event_t *ev)
+{
     // allow spy mode changes even during the demo
-    if (gamestate == GS_LEVEL && ev->type == ev_keydown 
-        && ev->data1 == key_spy && (singledemo || !gameskill) ) // [STRIFE]: o_O
+    if (gamestate == GS_LEVEL && ev->type == ev_keydown && ev->data1 == key_spy && (singledemo || !gameskill)) // [STRIFE]: o_O
     {
-        // spy mode 
-        do 
-        { 
-            displayplayer++; 
-            if (displayplayer == MAXPLAYERS) 
-                displayplayer = 0; 
-        } while (!playeringame[displayplayer] && displayplayer != consoleplayer); 
-        return true; 
+        // spy mode
+        do
+        {
+            displayplayer++;
+            if (displayplayer == MAXPLAYERS)
+                displayplayer = 0;
+        } while (!playeringame[displayplayer] && displayplayer != consoleplayer);
+        return true;
     }
 
     // any other key pops up menu if in demos
-    if (gameaction == ga_nothing && !singledemo && 
-        (demoplayback || gamestate == GS_DEMOSCREEN) 
-        ) 
-    { 
-        if (ev->type == ev_keydown ||  
-            (ev->type == ev_mouse && ev->data1) || 
-            (ev->type == ev_joystick && ev->data1) ) 
-        { 
-            if(devparm && ev->data1 == 'g')
+    if (gameaction == ga_nothing && !singledemo &&
+        (demoplayback || gamestate == GS_DEMOSCREEN))
+    {
+        if (ev->type == ev_keydown ||
+            (ev->type == ev_mouse && ev->data1) ||
+            (ev->type == ev_joystick && ev->data1))
+        {
+            if (devparm && ev->data1 == 'g')
                 D_PageTicker(); // [STRIFE]: wat? o_O
             else
-                M_StartControlPanel (); 
-            return true; 
-        } 
-        return false; 
-    } 
+                M_StartControlPanel();
+            return true;
+        }
+        return false;
+    }
 
-    if (gamestate == GS_LEVEL) 
-    { 
+    if (gamestate == GS_LEVEL)
+    {
 #if 0 
         if (devparm && ev->type == ev_keydown && ev->data1 == ';') 
         { 
             G_DeathMatchSpawnPlayer (0); 
             return true; 
-        } 
-#endif 
-        if (HU_Responder (ev)) 
-            return true;	// chat ate the event 
-        if (ST_Responder (ev)) 
-            return true;	// status window ate it 
-        if (AM_Responder (ev)) 
-            return true;	// automap ate it 
-    } 
+        }
+#endif
+        if (HU_Responder(ev))
+            return true; // chat ate the event
+        if (ST_Responder(ev))
+            return true; // status window ate it
+        if (AM_Responder(ev))
+            return true; // automap ate it
+    }
 
-    if (gamestate == GS_FINALE) 
-    { 
-        if (F_Responder (ev)) 
-            return true;	// finale ate the event 
-    } 
+    if (gamestate == GS_FINALE)
+    {
+        if (F_Responder(ev))
+            return true; // finale ate the event
+    }
 
     if (testcontrols && ev->type == ev_mouse)
     {
-        // If we are invoked by setup to test the controls, save the 
+        // If we are invoked by setup to test the controls, save the
         // mouse speed so that we can display it on-screen.
-        // Perform a low pass filter on this so that the thermometer 
+        // Perform a low pass filter on this so that the thermometer
         // appears to move smoothly.
 
         testcontrols_mousespeed = abs(ev->data2);
@@ -853,126 +842,126 @@ boolean G_Responder (event_t* ev)
         next_weapon = 1;
     }
 
-    switch (ev->type) 
-    { 
-    case ev_keydown: 
-        if (ev->data1 == key_pause) 
-        { 
-            sendpause = true; 
-        }
-        else if (ev->data1 <NUMKEYS) 
+    switch (ev->type)
+    {
+    case ev_keydown:
+        if (ev->data1 == key_pause)
         {
-            gamekeydown[ev->data1] = true; 
+            sendpause = true;
+        }
+        else if (ev->data1 < NUMKEYS)
+        {
+            gamekeydown[ev->data1] = true;
         }
 
-        return true;    // eat key down events 
+        return true; // eat key down events
 
-    case ev_keyup: 
-        if (ev->data1 <NUMKEYS) 
-            gamekeydown[ev->data1] = false; 
-        return false;   // always let key up events filter down 
+    case ev_keyup:
+        if (ev->data1 < NUMKEYS)
+            gamekeydown[ev->data1] = false;
+        return false; // always let key up events filter down
 
-    case ev_mouse: 
+    case ev_mouse:
         SetMouseButtons(ev->data1);
-        mousex = ev->data2*(mouseSensitivity+5)/10; 
-        mousey = ev->data3*(mouseSensitivity+5)/10; 
-        return true;    // eat events 
+        mousex = ev->data2 * (mouseSensitivity + 5) / 10;
+        mousey = ev->data3 * (mouseSensitivity + 5) / 10;
+        return true; // eat events
 
-    case ev_joystick: 
+    case ev_joystick:
         SetJoyButtons(ev->data1);
-        joyxmove = ev->data2; 
-        joyymove = ev->data3; 
+        joyxmove = ev->data2;
+        joyymove = ev->data3;
         joystrafemove = ev->data4;
         joylook = ev->data5;
-        return true;    // eat events 
+        return true; // eat events
 
-    default: 
-        break; 
-    } 
+    default:
+        break;
+    }
 
-    return false; 
-} 
+    return false;
+}
 
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
 //
-void G_Ticker (void) 
-{ 
-    int         i;
-    int         buf; 
-    ticcmd_t*   cmd;
+void G_Ticker(void)
+{
+    int i;
+    int buf;
+    ticcmd_t *cmd;
 
     // do player reborns if needed
-    for (i=0 ; i<MAXPLAYERS ; i++) 
-        if (playeringame[i] && players[i].playerstate == PST_REBORN) 
-            G_DoReborn (i);
+    for (i = 0; i < MAXPLAYERS; i++)
+        if (playeringame[i] && players[i].playerstate == PST_REBORN)
+            G_DoReborn(i);
 
     // do things to change the game state
     while (gameaction != ga_nothing)
-    { 
-        switch (gameaction) 
-        { 
-        case ga_loadlevel: 
-            G_DoLoadLevel (); 
-            break; 
+    {
+        switch (gameaction)
+        {
+        case ga_loadlevel:
+            G_DoLoadLevel();
+            break;
         case ga_newgame:
-            G_DoNewGame (); 
-            break; 
-        case ga_loadgame: 
-            G_DoLoadGame(true); 
+            G_DoNewGame();
+            break;
+        case ga_loadgame:
+            G_DoLoadGame(true);
             M_SaveMoveHereToMap(); // [STRIFE]
             M_ReadMisObj();
-            break; 
-        case ga_savegame: 
+            break;
+        case ga_savegame:
             M_SaveMoveMapToHere(); // [STRIFE]
             M_SaveMisObj(savepath);
-            G_DoSaveGame(savepath); 
-            break; 
-        case ga_playdemo: 
-            G_DoPlayDemo (); 
-            break; 
-        case ga_completed: 
-            G_DoCompleted (); 
-            break; 
-        case ga_victory: 
-            F_StartFinale (); 
-            break; 
-        case ga_worlddone: 
-            G_DoWorldDone (); 
-            break; 
-        case ga_screenshot: 
+            G_DoSaveGame(savepath);
+            break;
+        case ga_playdemo:
+            G_DoPlayDemo();
+            break;
+        case ga_completed:
+            G_DoCompleted();
+            break;
+        case ga_victory:
+            F_StartFinale();
+            break;
+        case ga_worlddone:
+            G_DoWorldDone();
+            break;
+        case ga_screenshot:
             V_ScreenShot("STRIFE%02i.%s"); // [STRIFE] file name, message
             players[consoleplayer].message = DEH_String("STRIFE  by Rogue entertainment");
-            gameaction = ga_nothing; 
-            break; 
-        case ga_nothing: 
-            break; 
-        } 
+            gameaction = ga_nothing;
+            break;
+        case ga_nothing:
+            break;
+        }
     }
-    
+
     // get commands, check consistancy,
     // and build new consistancy check
-    buf = (gametic/ticdup)%BACKUPTICS; 
+    buf = (gametic / ticdup) % BACKUPTICS;
 
     // STRIFE-TODO: pnameprefixes bullcrap
 
-    for (i=0 ; i<MAXPLAYERS ; i++)
+    for (i = 0; i < MAXPLAYERS; i++)
     {
-        if (playeringame[i]) 
-        { 
-            cmd = &players[i].cmd; 
+        if (playeringame[i])
+        {
+            cmd = &players[i].cmd;
 
-            memcpy (cmd, &netcmds[i], sizeof(ticcmd_t)); 
+            memcpy(cmd, &netcmds[i], sizeof(ticcmd_t));
 
             if (demoplayback)
-                G_ReadDemoTiccmd (cmd); 
+                G_ReadDemoTiccmd(cmd);
             if (demorecording)
-                G_WriteDemoTiccmd (cmd);
+                G_WriteDemoTiccmd(cmd);
 
             // check for turbo cheats
 
-            // check ~ 4 seconds whether to display the turbo message. 
+            // check ~ 4 seconds whether to display the turbo message.
             // store if the turbo threshold was exceeded in any tics
             // over the past 4 seconds.  offset the checking period
             // for each player so messages are not displayed at the
@@ -983,9 +972,7 @@ void G_Ticker (void)
                 turbodetected[i] = true;
             }
 
-            if ((gametic & 31) == 0 
-                && ((gametic >> 5) % MAXPLAYERS) == i
-                && turbodetected[i])
+            if ((gametic & 31) == 0 && ((gametic >> 5) % MAXPLAYERS) == i && turbodetected[i])
             {
                 static char turbomessage[80];
                 M_snprintf(turbomessage, sizeof(turbomessage),
@@ -994,51 +981,50 @@ void G_Ticker (void)
                 turbodetected[i] = false;
             }
 
-            if (netgame && !netdemo && !(gametic%ticdup) ) 
-            { 
-                if (gametic > BACKUPTICS 
-                    && consistancy[i][buf] != cmd->consistancy) 
-                { 
-                    I_Error ("consistency failure (%i should be %i)",
-                             cmd->consistancy, consistancy[i][buf]); 
-                } 
-                if (players[i].mo) 
-                    consistancy[i][buf] = players[i].mo->x; 
-                else 
-                    consistancy[i][buf] = rndindex; 
-            } 
+            if (netgame && !netdemo && !(gametic % ticdup))
+            {
+                if (gametic > BACKUPTICS && consistancy[i][buf] != cmd->consistancy)
+                {
+                    I_Error("consistency failure (%i should be %i)",
+                            cmd->consistancy, consistancy[i][buf]);
+                }
+                if (players[i].mo)
+                    consistancy[i][buf] = players[i].mo->x;
+                else
+                    consistancy[i][buf] = rndindex;
+            }
         }
     }
-    
-    // check for special buttons
-    for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-        if (playeringame[i]) 
-        { 
-            if (players[i].cmd.buttons & BT_SPECIAL) 
-            { 
-                switch (players[i].cmd.buttons & BT_SPECIALMASK) 
-                { 
-                case BTS_PAUSE: 
-                    paused ^= 1; 
-                    if (paused) 
-                        S_PauseSound (); 
-                    else 
-                        S_ResumeSound (); 
-                    break; 
 
-                case BTS_SAVEGAME: 
+    // check for special buttons
+    for (i = 0; i < MAXPLAYERS; i++)
+    {
+        if (playeringame[i])
+        {
+            if (players[i].cmd.buttons & BT_SPECIAL)
+            {
+                switch (players[i].cmd.buttons & BT_SPECIALMASK)
+                {
+                case BTS_PAUSE:
+                    paused ^= 1;
+                    if (paused)
+                        S_PauseSound();
+                    else
+                        S_ResumeSound();
+                    break;
+
+                case BTS_SAVEGAME:
                     if (!character_name[0]) // [STRIFE]
                     {
                         M_StringCopy(character_name, "NET GAME",
                                      sizeof(character_name));
                     }
-                    savegameslot =  
-                        (players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT; 
-                    gameaction = ga_savegame; 
-                    break; 
-                } 
-            } 
+                    savegameslot =
+                        (players[i].cmd.buttons & BTS_SAVEMASK) >> BTS_SAVESHIFT;
+                    gameaction = ga_savegame;
+                    break;
+                }
+            }
         }
     }
 
@@ -1054,14 +1040,14 @@ void G_Ticker (void)
     oldgamestate = gamestate;
 
     // do main actions
-    switch (gamestate) 
-    { 
-    case GS_LEVEL: 
-        P_Ticker (); 
-        ST_Ticker (); 
-        AM_Ticker (); 
-        HU_Ticker ();
-        break; 
+    switch (gamestate)
+    {
+    case GS_LEVEL:
+        P_Ticker();
+        ST_Ticker();
+        AM_Ticker();
+        HU_Ticker();
+        break;
 
         // haleyjd 08/23/10: [STRIFE] No intermission.
         /*
@@ -1073,24 +1059,23 @@ void G_Ticker (void)
         F_WaitTicker();
         break;
 
-    case GS_FINALE: 
-        F_Ticker (); 
-        break; 
-
-    case GS_DEMOSCREEN: 
-        D_PageTicker (); 
+    case GS_FINALE:
+        F_Ticker();
         break;
-    }        
-} 
- 
- 
+
+    case GS_DEMOSCREEN:
+        D_PageTicker();
+        break;
+    }
+}
+
 //
 // PLAYER STRUCTURE FUNCTIONS
 // also see P_SpawnPlayer in P_Things
 //
 
 //
-// G_InitPlayer 
+// G_InitPlayer
 // Called at the start.
 // Called by the game initialization functions.
 //
@@ -1108,7 +1093,6 @@ void G_InitPlayer (int player)
 	 
 } 
 */
- 
 
 //
 // G_PlayerFinishLevel
@@ -1135,48 +1119,48 @@ void G_PlayerFinishLevel (int player)
 
 //
 // G_PlayerReborn
-// Called after a player dies 
-// almost everything is cleared and initialized 
+// Called after a player dies
+// almost everything is cleared and initialized
 //
 // [STRIFE] Small changes for allegiance, inventory, health auto-use, and
 // mission objective.
 //
-void G_PlayerReborn (int player) 
-{ 
-    player_t*   p; 
-    int         i; 
-    int         frags[MAXPLAYERS]; 
-    int         killcount;
-    int         allegiance;
+void G_PlayerReborn(int player)
+{
+    player_t *p;
+    int i;
+    int frags[MAXPLAYERS];
+    int killcount;
+    int allegiance;
 
     killcount = players[player].killcount;
     allegiance = players[player].allegiance; // [STRIFE]
 
-    memcpy(frags,players[player].frags,sizeof(frags));
+    memcpy(frags, players[player].frags, sizeof(frags));
 
-    p = &players[player]; 
-    memset (p, 0, sizeof(*p)); 
+    p = &players[player];
+    memset(p, 0, sizeof(*p));
 
     memcpy(p->frags, frags, sizeof(p->frags));
 
-    p->usedown               = true;                 // don't do anything immediately
-    p->attackdown            = true;
-    p->inventorydown         = true;                 // villsa [STRIFE]
-    p->playerstate           = PST_LIVE;       
-    p->health                = deh_initial_health;   // Use dehacked value
-    p->readyweapon           = wp_fist;              // villsa [STRIFE] default to fists
-    p->pendingweapon         = wp_fist;              // villsa [STRIFE] default to fists
-    p->weaponowned[wp_fist]  = true;                 // villsa [STRIFE] default to fists
-    p->cheats               |= CF_AUTOHEALTH;        // villsa [STRIFE]
-    p->killcount             = killcount;
-    p->allegiance            = allegiance;           // villsa [STRIFE]
-    p->centerview            = true;                 // villsa [STRIFE]
+    p->usedown = true; // don't do anything immediately
+    p->attackdown = true;
+    p->inventorydown = true; // villsa [STRIFE]
+    p->playerstate = PST_LIVE;
+    p->health = deh_initial_health; // Use dehacked value
+    p->readyweapon = wp_fist;       // villsa [STRIFE] default to fists
+    p->pendingweapon = wp_fist;     // villsa [STRIFE] default to fists
+    p->weaponowned[wp_fist] = true; // villsa [STRIFE] default to fists
+    p->cheats |= CF_AUTOHEALTH;     // villsa [STRIFE]
+    p->killcount = killcount;
+    p->allegiance = allegiance; // villsa [STRIFE]
+    p->centerview = true;       // villsa [STRIFE]
 
-    for(i = 0; i < NUMAMMO; i++) 
-        p->maxammo[i] = maxammo[i]; 
+    for (i = 0; i < NUMAMMO; i++)
+        p->maxammo[i] = maxammo[i];
 
     // [STRIFE] clear inventory
-    for(i = 0; i < 32; i++)
+    for (i = 0; i < 32; i++)
         p->inventory[i].type = NUMMOBJTYPES;
 
     // villsa [STRIFE]: Default objective
@@ -1185,46 +1169,44 @@ void G_PlayerReborn (int player)
 }
 
 //
-// G_CheckSpot  
+// G_CheckSpot
 // Returns false if the player cannot be respawned
-// at the given mapthing_t spot  
-// because something is occupying it 
+// at the given mapthing_t spot
+// because something is occupying it
 //
 // [STRIFE] Changed to eliminate body queue and an odd error message was added.
 //
-void P_SpawnPlayer (mapthing_t* mthing); 
- 
+void P_SpawnPlayer(mapthing_t *mthing);
+
 boolean
-G_CheckSpot
-( int		playernum,
-  mapthing_t*	mthing ) 
-{ 
-    fixed_t             x;
-    fixed_t             y; 
-    subsector_t*        ss; 
-    unsigned            an; 
-    mobj_t*             mo; 
-    int                 i;
+G_CheckSpot(int playernum,
+            mapthing_t *mthing)
+{
+    fixed_t x;
+    fixed_t y;
+    subsector_t *ss;
+    unsigned an;
+    mobj_t *mo;
+    int i;
 
     if (!players[playernum].mo)
     {
         // [STRIFE] weird error message added here:
-        if(leveltime > 0)
+        if (leveltime > 0)
             players[playernum].message = DEH_String("you didn't have a body!");
 
         // first spawn of level, before corpses
-        for (i=0 ; i<playernum ; i++)
-            if (players[i].mo->x == mthing->x << FRACBITS
-                && players[i].mo->y == mthing->y << FRACBITS)
-                return false;	
+        for (i = 0; i < playernum; i++)
+            if (players[i].mo->x == mthing->x << FRACBITS && players[i].mo->y == mthing->y << FRACBITS)
+                return false;
         return true;
     }
 
-    x = mthing->x << FRACBITS; 
-    y = mthing->y << FRACBITS; 
+    x = mthing->x << FRACBITS;
+    y = mthing->y << FRACBITS;
 
-    if (!P_CheckPosition (players[playernum].mo, x, y) ) 
-        return false; 
+    if (!P_CheckPosition(players[playernum].mo, x, y))
+        return false;
 
     // flush an old corpse if needed
     // [STRIFE] player corpses remove themselves after a short time, so
@@ -1236,51 +1218,48 @@ G_CheckSpot
     bodyqueslot++; 
     */
 
-    // spawn a teleport fog 
-    ss = R_PointInSubsector (x,y); 
-    an = ( ANG45 * (((unsigned int) mthing->angle)/45) ) >> ANGLETOFINESHIFT; 
+    // spawn a teleport fog
+    ss = R_PointInSubsector(x, y);
+    an = (ANG45 * (((unsigned int)mthing->angle) / 45)) >> ANGLETOFINESHIFT;
 
-    mo = P_SpawnMobj (x+20*finecosine[an], y+20*finesine[an] 
-                      , ss->sector->floorheight 
-                      , MT_TFOG); 
+    mo = P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an], ss->sector->floorheight, MT_TFOG);
 
-    if (players[consoleplayer].viewz != 1) 
-        S_StartSound (mo, sfx_telept);	// don't start sound on first frame 
+    if (players[consoleplayer].viewz != 1)
+        S_StartSound(mo, sfx_telept); // don't start sound on first frame
 
-    return true; 
-} 
-
+    return true;
+}
 
 //
-// G_DeathMatchSpawnPlayer 
-// Spawns a player at one of the random death match spots 
-// called at level load and each death 
+// G_DeathMatchSpawnPlayer
+// Spawns a player at one of the random death match spots
+// called at level load and each death
 //
 // [STRIFE]: Modified exit message to match binary.
 //
-void G_DeathMatchSpawnPlayer (int playernum) 
-{ 
-    int             i,j; 
-    int             selections; 
+void G_DeathMatchSpawnPlayer(int playernum)
+{
+    int i, j;
+    int selections;
 
-    selections = deathmatch_p - deathmatchstarts; 
-    if (selections < 4) 
-        I_Error ("Only %i deathmatch spots, at least 4 required!", selections); 
+    selections = deathmatch_p - deathmatchstarts;
+    if (selections < 4)
+        I_Error("Only %i deathmatch spots, at least 4 required!", selections);
 
-    for (j=0 ; j<20 ; j++) 
-    { 
-        i = P_Random() % selections; 
-        if (G_CheckSpot (playernum, &deathmatchstarts[i]) ) 
-        { 
-            deathmatchstarts[i].type = playernum+1; 
-            P_SpawnPlayer (&deathmatchstarts[i]); 
-            return; 
-        } 
-    } 
+    for (j = 0; j < 20; j++)
+    {
+        i = P_Random() % selections;
+        if (G_CheckSpot(playernum, &deathmatchstarts[i]))
+        {
+            deathmatchstarts[i].type = playernum + 1;
+            P_SpawnPlayer(&deathmatchstarts[i]);
+            return;
+        }
+    }
 
-    // no good spot, so the player will probably get stuck 
-    P_SpawnPlayer (&playerstarts[playernum]); 
-} 
+    // no good spot, so the player will probably get stuck
+    P_SpawnPlayer(&playerstarts[playernum]);
+}
 
 //
 // G_LoadPath
@@ -1296,17 +1275,17 @@ void G_LoadPath(int map)
     M_snprintf(mapbuf, sizeof(mapbuf), "%d", map);
 
     // haleyjd: free if already set, and use M_SafeFilePath
-    if(loadpath)
+    if (loadpath)
         Z_Free(loadpath);
     loadpath = M_SafeFilePath(savepathtemp, mapbuf);
 }
 
 //
 // G_DoReborn
-// 
-void G_DoReborn (int playernum) 
-{ 
-    int                             i; 
+//
+void G_DoReborn(int playernum)
+{
+    int i;
 
     if (!netgame)
     {
@@ -1315,89 +1294,89 @@ void G_DoReborn (int playernum)
         G_LoadPath(gamemap);
         gameaction = ga_loadgame;
     }
-    else 
+    else
     {
         // respawn at the start
 
-        // first dissasociate the corpse 
+        // first dissasociate the corpse
         // [STRIFE] Checks for NULL first
-        if(players[playernum].mo)
+        if (players[playernum].mo)
             players[playernum].mo->player = NULL;
 
-        // spawn at random spot if in death match 
-        if (deathmatch) 
-        { 
-            G_DeathMatchSpawnPlayer (playernum); 
-            return; 
-        } 
-
-        if (G_CheckSpot (playernum, &playerstarts[playernum]) ) 
-        { 
-            P_SpawnPlayer (&playerstarts[playernum]); 
-            return; 
+        // spawn at random spot if in death match
+        if (deathmatch)
+        {
+            G_DeathMatchSpawnPlayer(playernum);
+            return;
         }
 
-        // try to spawn at one of the other players spots 
-        for (i=0 ; i<MAXPLAYERS ; i++)
+        if (G_CheckSpot(playernum, &playerstarts[playernum]))
         {
-            if (G_CheckSpot (playernum, &playerstarts[i]) ) 
-            { 
-                playerstarts[i].type = playernum+1;     // fake as other player 
-                P_SpawnPlayer (&playerstarts[i]);
-                playerstarts[i].type = i+1;             // restore 
-                return; 
+            P_SpawnPlayer(&playerstarts[playernum]);
+            return;
+        }
+
+        // try to spawn at one of the other players spots
+        for (i = 0; i < MAXPLAYERS; i++)
+        {
+            if (G_CheckSpot(playernum, &playerstarts[i]))
+            {
+                playerstarts[i].type = playernum + 1; // fake as other player
+                P_SpawnPlayer(&playerstarts[i]);
+                playerstarts[i].type = i + 1; // restore
+                return;
             }
             // he's going to be inside something.  Too bad.
         }
-        P_SpawnPlayer (&playerstarts[playernum]); 
-    } 
-} 
- 
+        P_SpawnPlayer(&playerstarts[playernum]);
+    }
+}
+
 //
 // G_ScreenShot
 //
 // [STRIFE] Verified unmodified
 //
-void G_ScreenShot (void) 
-{ 
-    gameaction = ga_screenshot; 
-} 
+void G_ScreenShot(void)
+{
+    gameaction = ga_screenshot;
+}
 
 // haleyjd 20100823: [STRIFE] Removed par times.
 
 //
-// G_DoCompleted 
+// G_DoCompleted
 //
-//boolean         secretexit; 
-extern char*	pagename; 
+//boolean         secretexit;
+extern char *pagename;
 
 //
 // G_RiftExitLevel
 //
 // haleyjd 20100824: [STRIFE] New function
-// * Called from some exit linedefs to exit to a specific riftspot in the 
+// * Called from some exit linedefs to exit to a specific riftspot in the
 //   given destination map.
 //
 void G_RiftExitLevel(int map, int spot, angle_t angle)
 {
     gameaction = ga_completed;
-    
+
     // special handling for post-Sigil map changes
-    if(players[0].weaponowned[wp_sigil])
+    if (players[0].weaponowned[wp_sigil])
     {
-        if(map == 3) // Front Base -> Abandoned Front Base
+        if (map == 3) // Front Base -> Abandoned Front Base
             map = 30;
-        if(map == 7) // Castle -> New Front Base
+        if (map == 7) // Castle -> New Front Base
             map = 10;
     }
 
     // no rifting in deathmatch games
-    if(deathmatch)
+    if (deathmatch)
         spot = 0;
 
     riftangle = angle;
-    riftdest  = spot;
-    destmap   = map;
+    riftdest = spot;
+    destmap = map;
 }
 
 //
@@ -1421,14 +1400,14 @@ void G_Exit2(int dest, angle_t angle)
 // haleyjd 20100824: [STRIFE]:
 // * Default to next map in numeric order; init destmap and riftdest.
 //
-void G_ExitLevel (int dest) 
+void G_ExitLevel(int dest)
 {
-    if(dest == 0)
+    if (dest == 0)
         dest = gamemap + 1;
     destmap = dest;
     riftdest = 0;
-    gameaction = ga_completed; 
-} 
+    gameaction = ga_completed;
+}
 
 /*
 // haleyjd 20100823: [STRIFE] No secret exits in Strife.
@@ -1464,41 +1443,40 @@ void G_StartFinale(void)
 // haleyjd 20100823: [STRIFE]:
 // * Removed G_PlayerFinishLevel and just sets some powerup states.
 // * Removed Chex, as not relevant to Strife.
-// * Removed DOOM level transfer logic 
+// * Removed DOOM level transfer logic
 // * Removed intermission code.
 // * Added setting gameaction to ga_worlddone.
 //
-void G_DoCompleted (void) 
+void G_DoCompleted(void)
 {
     int i;
 
     // deal with powerup states
-    for(i = 0; i < MAXPLAYERS; i++)
+    for (i = 0; i < MAXPLAYERS; i++)
     {
-        if(playeringame[i])
+        if (playeringame[i])
         {
             // [STRIFE] restore pw_allmap power from mapstate cache
-            if(destmap < 40)
+            if (destmap < 40)
                 players[i].powers[pw_allmap] = players[i].mapstate[destmap];
 
             // Shadowarmor doesn't persist between maps in netgames
-            if(netgame)
+            if (netgame)
                 players[i].powers[pw_invisibility] = 0;
         }
     }
 
-    stonecold = false;  // villsa [STRIFE]
+    stonecold = false; // villsa [STRIFE]
 
-    if (automapactive) 
-        AM_Stop (); 
+    if (automapactive)
+        AM_Stop();
 
     // [STRIFE] HUB SAVE
-    if(!deathmatch)
+    if (!deathmatch)
         G_DoSaveGame(savepathtemp);
-    
-    gameaction = ga_worlddone;
-} 
 
+    gameaction = ga_worlddone;
+}
 
 // haleyjd 20100824: [STRIFE] No secret exits.
 /*
@@ -1539,12 +1517,12 @@ void G_WorldDone (void)
 //
 void G_RiftPlayer(void)
 {
-    if(riftdest)
+    if (riftdest)
     {
-        P_TeleportMove(players[0].mo, 
-                       riftSpots[riftdest - 1].x << FRACBITS, 
+        P_TeleportMove(players[0].mo,
+                       riftSpots[riftdest - 1].x << FRACBITS,
                        riftSpots[riftdest - 1].y << FRACBITS);
-        players[0].mo->angle  = riftangle;
+        players[0].mo->angle = riftangle;
         players[0].mo->health = players[0].health;
     }
 }
@@ -1567,13 +1545,13 @@ boolean G_RiftCheat(int riftSpotNum)
 //
 // haleyjd 20100824: [STRIFE] Added destmap -> gamemap set.
 //
-void G_DoWorldDone (void) 
-{        
+void G_DoWorldDone(void)
+{
     int temp_leveltime = leveltime;
     boolean temp_shadow = false;
-    boolean temp_mvis   = false;
+    boolean temp_mvis = false;
 
-    gamestate = GS_LEVEL; 
+    gamestate = GS_LEVEL;
     gamemap = destmap;
 
     // [STRIFE] HUB LOAD
@@ -1581,9 +1559,9 @@ void G_DoWorldDone (void)
     if (!deathmatch)
     {
         // Remember Shadowarmor across hub loads
-        if(players[0].mo->flags & MF_SHADOW)
+        if (players[0].mo->flags & MF_SHADOW)
             temp_shadow = true;
-        if(players[0].mo->flags & MF_MVIS)
+        if (players[0].mo->flags & MF_MVIS)
             temp_mvis = true;
     }
     G_DoLoadGame(false);
@@ -1591,13 +1569,13 @@ void G_DoWorldDone (void)
     // [STRIFE] leveltime carries over between maps
     leveltime = temp_leveltime;
 
-    if(!deathmatch)
+    if (!deathmatch)
     {
         // [STRIFE]: transfer saved powerups
-        players[0].mo->flags &= ~(MF_SHADOW|MF_MVIS);
-        if(temp_shadow)
+        players[0].mo->flags &= ~(MF_SHADOW | MF_MVIS);
+        if (temp_shadow)
             players[0].mo->flags |= MF_SHADOW;
-        if(temp_mvis)
+        if (temp_mvis)
             players[0].mo->flags |= MF_MVIS;
 
         // [STRIFE] HUB SAVE
@@ -1606,9 +1584,9 @@ void G_DoWorldDone (void)
         M_SaveMisObj(savepathtemp);
     }
 
-    gameaction = ga_nothing; 
-    viewactive = true; 
-} 
+    gameaction = ga_nothing;
+    viewactive = true;
+}
 
 //
 // G_DoWorldDone2
@@ -1636,13 +1614,13 @@ void G_ReadCurrent(const char *path)
 
     temppath = M_SafeFilePath(path, "\\current");
 
-    if(M_ReadFile(temppath, &buffer) <= 0)
+    if (M_ReadFile(temppath, &buffer) <= 0)
         gameaction = ga_newgame;
     else
     {
         // haleyjd 20110211: do endian-correct read
-        gamemap = (((int)buffer[0])       |
-                   ((int)buffer[1] <<  8) |
+        gamemap = (((int)buffer[0]) |
+                   ((int)buffer[1] << 8) |
                    ((int)buffer[2] << 16) |
                    ((int)buffer[3] << 24));
         gameaction = ga_loadgame;
@@ -1650,18 +1628,18 @@ void G_ReadCurrent(const char *path)
     }
 
     Z_Free(temppath);
-    
+
     G_LoadPath(gamemap);
 }
 
 //
 // G_InitFromSavegame
-// Can be called by the startup code or the menu task. 
+// Can be called by the startup code or the menu task.
 //
 extern boolean setsizeneeded;
-void R_ExecuteSetViewSize (void);
+void R_ExecuteSetViewSize(void);
 
-char	savename[256];
+char savename[256];
 
 // [STRIFE]: No such function.
 /*
@@ -1673,9 +1651,9 @@ void G_LoadGame (char* name)
 */
 
 // haleyjd 20100928: [STRIFE] VERSIONSIZE == 8
-#define VERSIONSIZE             8
+#define VERSIONSIZE 8
 
-void G_DoLoadGame (boolean userload) 
+void G_DoLoadGame(boolean userload)
 {
     int savedleveltime;
 
@@ -1702,36 +1680,36 @@ void G_DoLoadGame (boolean userload)
     // Evidently this is a Choco-ism, necessitated by reading the savegame
     // header *before* calling G_DoLoadLevel.
     savedleveltime = leveltime;
-    
+
     // load a base level
 
     // STRIFE-TODO: ????
-    if(userload)
-        G_InitNew(gameskill, gamemap); 
+    if (userload)
+        G_InitNew(gameskill, gamemap);
     else
         G_DoLoadLevel();
- 
+
     leveltime = savedleveltime;
 
     // dearchive all the modifications
     // [STRIFE] some portions of player_t are not overwritten when loading
     //   between hub levels
-    P_UnArchivePlayers (userload); 
-    P_UnArchiveWorld (); 
-    P_UnArchiveThinkers (); 
-    P_UnArchiveSpecials (); 
- 
+    P_UnArchivePlayers(userload);
+    P_UnArchiveWorld();
+    P_UnArchiveThinkers();
+    P_UnArchiveSpecials();
+
     if (!P_ReadSaveGameEOF())
-        I_Error ("Bad savegame");
+        I_Error("Bad savegame");
 
     fclose(save_stream);
-    
+
     if (setsizeneeded)
-        R_ExecuteSetViewSize ();
-    
+        R_ExecuteSetViewSize();
+
     // draw the pattern into the back screen
-    R_FillBackScreen ();
-} 
+    R_FillBackScreen();
+}
 
 //
 // G_WriteSaveName
@@ -1753,12 +1731,12 @@ boolean G_WriteSaveName(int slot, const char *charname)
 
     // haleyjd: free previous path, if any, and allocate new one using
     // M_SafeFilePath routine, which isn't limited to 128 characters.
-    if(savepathtemp)
+    if (savepathtemp)
         Z_Free(savepathtemp);
     savepathtemp = M_SafeFilePath(savegamedir, "strfsav6.ssg");
 
     // haleyjd: as above.
-    if(savepath)
+    if (savepath)
         Z_Free(savepath);
     savepath = M_SafeFilePath(savegamedir, M_MakeStrifeSaveDir(savegameslot, ""));
 
@@ -1796,8 +1774,8 @@ G_SaveGame
 }
 */
 
-void G_DoSaveGame (char *path)
-{ 
+void G_DoSaveGame(char *path)
+{
     char *current_path;
     char *savegame_file;
     char *temp_savegame_file;
@@ -1805,7 +1783,7 @@ void G_DoSaveGame (char *path)
     char gamemapstr[33];
 
     temp_savegame_file = P_TempSaveGameFile();
-    
+
     // [STRIFE] custom save file path logic
     memset(gamemapstr, 0, sizeof(gamemapstr));
     M_snprintf(gamemapstr, sizeof(gamemapstr), "%d", gamemap);
@@ -1815,8 +1793,8 @@ void G_DoSaveGame (char *path)
     //   the save slot is currently on.
     current_path = M_SafeFilePath(path, "current");
     // haleyjd: endian-agnostic IO
-    gamemapbytes[0] = (byte)( gamemap        & 0xff);
-    gamemapbytes[1] = (byte)((gamemap >>  8) & 0xff);
+    gamemapbytes[0] = (byte)(gamemap & 0xff);
+    gamemapbytes[1] = (byte)((gamemap >> 8) & 0xff);
     gamemapbytes[2] = (byte)((gamemap >> 16) & 0xff);
     gamemapbytes[3] = (byte)((gamemap >> 24) & 0xff);
     M_WriteFile(current_path, gamemapbytes, 4);
@@ -1824,7 +1802,7 @@ void G_DoSaveGame (char *path)
 
     // Open the savegame file for writing.  We write to a temporary file
     // and then rename it at the end if it was successfully written.
-    // This prevents an existing savegame from being overwritten by 
+    // This prevents an existing savegame from being overwritten by
     // a corrupted one, or if a savegame buffer overrun occurs.
 
     save_stream = fopen(temp_savegame_file, "wb");
@@ -1837,23 +1815,23 @@ void G_DoSaveGame (char *path)
     savegame_error = false;
 
     P_WriteSaveGameHeader(savedescription);
- 
-    P_ArchivePlayers (); 
-    P_ArchiveWorld (); 
-    P_ArchiveThinkers (); 
-    P_ArchiveSpecials (); 
+
+    P_ArchivePlayers();
+    P_ArchiveWorld();
+    P_ArchiveThinkers();
+    P_ArchiveSpecials();
 
     P_WriteSaveGameEOF();
 
-    // Enforce the same savegame size limit as in Vanilla Doom, 
+    // Enforce the same savegame size limit as in Vanilla Doom,
     // except if the vanilla_savegame_limit setting is turned off.
     // [STRIFE]: Verified subject to same limit.
 
     if (vanilla_savegame_limit && ftell(save_stream) > SAVEGAMESIZE)
     {
-        I_Error ("Savegame buffer overrun");
+        I_Error("Savegame buffer overrun");
     }
-    
+
     // Finish up, close the savegame file.
 
     fclose(save_stream);
@@ -1863,44 +1841,43 @@ void G_DoSaveGame (char *path)
 
     remove(savegame_file);
     rename(temp_savegame_file, savegame_file);
-    
+
     // haleyjd: free the savegame_file path
     Z_Free(savegame_file);
 
-    gameaction = ga_nothing; 
+    gameaction = ga_nothing;
     //M_StringCopy(savedescription, "", sizeof(savedescription));
 
     // [STRIFE]: custom message logic
-    if(!strcmp(path, savepath))
+    if (!strcmp(path, savepath))
     {
         M_snprintf(savename, sizeof(savename), "%s saved.", character_name);
         players[consoleplayer].message = savename;
     }
 
     // draw the pattern into the back screen
-    R_FillBackScreen ();
-} 
- 
+    R_FillBackScreen();
+}
 
 //
-skill_t d_skill; 
+skill_t d_skill;
 //int     d_episode; [STRIFE] No such thing as episodes in Strife
-int     d_map; 
+int d_map;
 
 //
 // G_DeferedInitNew
 //
 // Can be called by the startup code or the menu task,
-// consoleplayer, displayplayer, playeringame[] should be set. 
+// consoleplayer, displayplayer, playeringame[] should be set.
 //
 // haleyjd 20100922: [STRIFE] Removed episode parameter
 //
 void G_DeferedInitNew(skill_t skill, int map)
-{ 
-    d_skill = skill; 
-    d_map = map; 
-    gameaction = ga_newgame; 
-} 
+{
+    d_skill = skill;
+    d_map = map;
+    gameaction = ga_newgame;
+}
 
 //
 // G_DoNewGame
@@ -1908,21 +1885,21 @@ void G_DeferedInitNew(skill_t skill, int map)
 // [STRIFE] Code added to turn off the stonecold effect.
 //   Someone also removed the nomonsters reset...
 //
-void G_DoNewGame (void) 
+void G_DoNewGame(void)
 {
-    demoplayback = false; 
+    demoplayback = false;
     netdemo = false;
     netgame = false;
     deathmatch = false;
     playeringame[1] = playeringame[2] = playeringame[3] = 0;
     respawnparm = false;
     fastparm = false;
-    stonecold = false;      // villsa [STRIFE]
+    stonecold = false; // villsa [STRIFE]
     //nomonsters = false;   [STRIFE] not set here!?!
     consoleplayer = 0;
-    G_InitNew (d_skill, d_map);
-    gameaction = ga_nothing; 
-} 
+    G_InitNew(d_skill, d_map);
+    gameaction = ga_nothing;
+}
 
 //
 // G_InitNew
@@ -1931,28 +1908,26 @@ void G_DoNewGame (void)
 // * Added riftdest initialization
 // * Removed episode parameter
 //
-void
-G_InitNew
-( skill_t       skill,
-  int           map ) 
-{ 
+void G_InitNew(skill_t skill,
+               int map)
+{
     const char *skytexturename;
-    int             i; 
+    int i;
 
-    if (paused) 
-    { 
-        paused = false; 
-        S_ResumeSound (); 
-    } 
+    if (paused)
+    {
+        paused = false;
+        S_ResumeSound();
+    }
 
-    if (skill > sk_nightmare) 
+    if (skill > sk_nightmare)
         skill = sk_nightmare;
 
     // [STRIFE] Removed episode nonsense and gamemap clipping
 
-    M_ClearRandom (); 
+    M_ClearRandom();
 
-    if (skill == sk_nightmare || respawnparm )
+    if (skill == sk_nightmare || respawnparm)
         respawnmonsters = true;
     else
         respawnmonsters = false;
@@ -1961,79 +1936,79 @@ G_InitNew
     // BUG: None of this code runs properly when loading save games, so
     // basically it's impossible to play any skill level properly unless
     // you never quit and reload from the command line.
-    if(!skill && gameskill)
+    if (!skill && gameskill)
     {
         // Setting to Baby skill... make things easier.
 
         // Acolytes walk, attack, and feel pain slower
-        for(i = S_AGRD_13; i <= S_AGRD_23; i++)
-            states[i].tics *= 2; 
+        for (i = S_AGRD_13; i <= S_AGRD_23; i++)
+            states[i].tics *= 2;
 
         // Reavers attack slower
-        for(i = S_ROB1_10; i <= S_ROB1_15; i++)
+        for (i = S_ROB1_10; i <= S_ROB1_15; i++)
             states[i].tics *= 2;
 
         // Turrets attack slower
-        for(i = S_TURT_02; i <= S_TURT_03; i++)
+        for (i = S_TURT_02; i <= S_TURT_03; i++)
             states[i].tics *= 2;
 
         // Crusaders attack and feel pain slower
-        for(i = S_ROB2_09; i <= S_ROB2_19; i++)
+        for (i = S_ROB2_09; i <= S_ROB2_19; i++)
             states[i].tics *= 2;
 
         // Stalkers think, walk, and attack slower
-        for(i = S_SPID_03; i <= S_SPID_10; i++)
+        for (i = S_SPID_03; i <= S_SPID_10; i++)
             states[i].tics *= 2;
 
         // The Bishop's homing missiles are faster (what?? BUG?)
         mobjinfo[MT_SEEKMISSILE].speed *= 2;
     }
-    if(skill && !gameskill)
+    if (skill && !gameskill)
     {
         // Setting a higher skill when previously on baby... make things normal
 
         // Acolytes
-        for(i = S_AGRD_13; i <= S_AGRD_23; i++)
-            states[i].tics >>= 1; 
+        for (i = S_AGRD_13; i <= S_AGRD_23; i++)
+            states[i].tics >>= 1;
 
         // Reavers
-        for(i = S_ROB1_10; i <= S_ROB1_15; i++)
+        for (i = S_ROB1_10; i <= S_ROB1_15; i++)
             states[i].tics >>= 1;
 
         // Turrets
-        for(i = S_TURT_02; i <= S_TURT_03; i++)
+        for (i = S_TURT_02; i <= S_TURT_03; i++)
             states[i].tics >>= 1;
 
         // Crusaders
-        for(i = S_ROB2_09; i <= S_ROB2_19; i++)
+        for (i = S_ROB2_09; i <= S_ROB2_19; i++)
             states[i].tics >>= 1;
 
         // Stalkers
-        for(i = S_SPID_03; i <= S_SPID_10; i++)
+        for (i = S_SPID_03; i <= S_SPID_10; i++)
             states[i].tics >>= 1;
 
         // The Bishop's homing missiles - again, seemingly backward.
         mobjinfo[MT_SEEKMISSILE].speed >>= 1;
     }
-    if(fastparm || (skill == sk_nightmare && skill != gameskill))
+    if (fastparm || (skill == sk_nightmare && skill != gameskill))
     {
         // BLOODBATH! Make some things super-aggressive.
-        
+
         // Acolytes walk, attack, and feel pain twice as fast
         // (This makes just getting out of the first room almost impossible)
-        for(i = S_AGRD_13; i <= S_AGRD_23; i++)
+        for (i = S_AGRD_13; i <= S_AGRD_23; i++)
             states[i].tics >>= 1;
 
         // Bishop's homing missiles again get SLOWER and not faster o_O
         mobjinfo[MT_SEEKMISSILE].speed >>= 1;
     }
-    else if(skill != sk_nightmare && gameskill == sk_nightmare)
+    else if (skill != sk_nightmare && gameskill == sk_nightmare)
     {
         // Setting back to an ordinary skill after being on Bloodbath?
         // Put stuff back to normal.
 
         // Acolytes
-        for(i = S_AGRD_13; i <= S_AGRD_23; i++)
+        for (i = S_AGRD_13; i <= S_AGRD_23; i++)
             states[i].tics *= 2;
 
         // Bishop's homing missiles
@@ -2041,17 +2016,17 @@ G_InitNew
     }
 
     // force players to be initialized upon first level load
-    for (i=0 ; i<MAXPLAYERS ; i++) 
-        players[i].playerstate = PST_REBORN; 
+    for (i = 0; i < MAXPLAYERS; i++)
+        players[i].playerstate = PST_REBORN;
 
-    usergame = true;                // will be set false if a demo 
-    paused = false; 
-    demoplayback = false; 
-    automapactive = false; 
-    viewactive = true; 
+    usergame = true; // will be set false if a demo
+    paused = false;
+    demoplayback = false;
+    automapactive = false;
+    viewactive = true;
     //gameepisode = episode; [STRIFE] no episodes
-    gamemap = map; 
-    gameskill = skill; 
+    gamemap = map;
+    gameskill = skill;
     riftdest = 0; // haleyjd 08/24/10: [STRIFE] init riftdest to zero on new game
 
     // Set the sky to use.
@@ -2065,7 +2040,7 @@ G_InitNew
     // source release, but this IS the way Vanilla DOS Doom behaves.
 
     // [STRIFE] Strife skies (of which there are but two)
-    if(gamemap >= 9 && gamemap < 32)
+    if (gamemap >= 9 && gamemap < 32)
         skytexturename = "skymnt01";
     else
         skytexturename = "skymnt02";
@@ -2077,31 +2052,30 @@ G_InitNew
     // [STRIFE] HUBS
     G_LoadPath(gamemap);
     G_DoLoadLevel();
-} 
- 
+}
 
 //
-// DEMO RECORDING 
-// 
-#define DEMOMARKER		0x80
+// DEMO RECORDING
+//
+#define DEMOMARKER 0x80
 
 //
 // G_ReadDemoTiccmd
 //
 // [STRIFE] Modified for Strife ticcmd_t
 //
-void G_ReadDemoTiccmd (ticcmd_t* cmd) 
-{ 
-    if (*demo_p == DEMOMARKER) 
+void G_ReadDemoTiccmd(ticcmd_t *cmd)
+{
+    if (*demo_p == DEMOMARKER)
     {
-        // end of demo data stream 
-        G_CheckDemoStatus (); 
-        return; 
+        // end of demo data stream
+        G_CheckDemoStatus();
+        return;
     }
-    cmd->forwardmove = ((signed char)*demo_p++); 
-    cmd->sidemove = ((signed char)*demo_p++); 
-    cmd->angleturn = ((unsigned char) *demo_p++)<<8; 
-    cmd->buttons = (unsigned char)*demo_p++; 
+    cmd->forwardmove = ((signed char)*demo_p++);
+    cmd->sidemove = ((signed char)*demo_p++);
+    cmd->angleturn = ((unsigned char)*demo_p++) << 8;
+    cmd->buttons = (unsigned char)*demo_p++;
     cmd->buttons2 = (unsigned char)*demo_p++; // [STRIFE]
     cmd->inventory = (int)*demo_p++;          // [STRIFE]
 }
@@ -2118,10 +2092,10 @@ static void IncreaseDemoBuffer(void)
     // Find the current size
 
     current_length = demoend - demobuffer;
-    
+
     // Generate a new buffer twice the size
     new_length = current_length * 2;
-    
+
     new_demobuffer = Z_Malloc(new_length, PU_STATIC, 0);
     new_demop = new_demobuffer + (demo_p - demobuffer);
 
@@ -2143,19 +2117,19 @@ static void IncreaseDemoBuffer(void)
 //
 // [STRIFE] Modified for Strife ticcmd_t.
 //
-void G_WriteDemoTiccmd (ticcmd_t* cmd) 
-{ 
+void G_WriteDemoTiccmd(ticcmd_t *cmd)
+{
     byte *demo_start;
 
-    if (gamekeydown[key_demo_quit])           // press q to end demo recording 
-        G_CheckDemoStatus (); 
+    if (gamekeydown[key_demo_quit]) // press q to end demo recording
+        G_CheckDemoStatus();
 
     demo_start = demo_p;
 
-    *demo_p++ = cmd->forwardmove; 
-    *demo_p++ = cmd->sidemove; 
-    *demo_p++ = cmd->angleturn >> 8; 
-    *demo_p++ = cmd->buttons; 
+    *demo_p++ = cmd->forwardmove;
+    *demo_p++ = cmd->sidemove;
+    *demo_p++ = cmd->angleturn >> 8;
+    *demo_p++ = cmd->buttons;
     *demo_p++ = cmd->buttons2;                 // [STRIFE]
     *demo_p++ = (byte)(cmd->inventory & 0xff); // [STRIFE]
 
@@ -2166,9 +2140,9 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
     {
         if (vanilla_demo_limit)
         {
-            // no more space 
-            G_CheckDemoStatus (); 
-            return; 
+            // no more space
+            G_CheckDemoStatus();
+            return;
         }
         else
         {
@@ -2177,23 +2151,21 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
 
             IncreaseDemoBuffer();
         }
-    } 
+    }
 
-    G_ReadDemoTiccmd (cmd);         // make SURE it is exactly the same 
-} 
- 
- 
- 
+    G_ReadDemoTiccmd(cmd); // make SURE it is exactly the same
+}
+
 //
-// G_RecordDemo 
-// 
+// G_RecordDemo
+//
 // [STRIFE] Verified unmodified
 //
-void G_RecordDemo (const char* name)
+void G_RecordDemo(const char *name)
 {
     size_t demoname_size;
-    int             i;
-    int             maxsize;
+    int i;
+    int maxsize;
 
     usergame = false;
     demoname_size = strlen(name) + 5;
@@ -2211,24 +2183,23 @@ void G_RecordDemo (const char* name)
 
     i = M_CheckParmWithArgs("-maxdemo", 1);
     if (i)
-        maxsize = atoi(myargv[i+1])*1024;
-    demobuffer = Z_Malloc (maxsize,PU_STATIC,NULL); 
+        maxsize = atoi(myargv[i + 1]) * 1024;
+    demobuffer = Z_Malloc(maxsize, PU_STATIC, NULL);
     demoend = demobuffer + maxsize;
 
-    demorecording = true; 
-} 
- 
- 
-void G_BeginRecording (void) 
-{ 
-    int             i; 
+    demorecording = true;
+}
+
+void G_BeginRecording(void)
+{
+    int i;
 
     //
     // @category demo
     //
     // Record a high resolution "Doom 1.91" demo.
     //
-    
+
     // STRIFE-TODO: if somebody makes a "Strife Plus", we could add this.
     /*
     longtics = M_CheckParm("-longtics") != 0;
@@ -2243,50 +2214,49 @@ void G_BeginRecording (void)
     // Save the right version code for this demo
     *demo_p++ = STRIFE_VERSION;
 
-    *demo_p++ = gameskill; 
+    *demo_p++ = gameskill;
     //*demo_p++ = gameepisode; [STRIFE] Doesn't have episodes.
-    *demo_p++ = gamemap; 
-    *demo_p++ = deathmatch; 
+    *demo_p++ = gamemap;
+    *demo_p++ = deathmatch;
     *demo_p++ = respawnparm;
     *demo_p++ = fastparm;
     *demo_p++ = nomonsters;
     *demo_p++ = consoleplayer;
- 
-    for (i=0 ; i<MAXPLAYERS ; i++) 
-        *demo_p++ = playeringame[i]; 
-} 
- 
+
+    for (i = 0; i < MAXPLAYERS; i++)
+        *demo_p++ = playeringame[i];
+}
 
 //
-// G_PlayDemo 
+// G_PlayDemo
 //
 
-const char	*defdemoname;
- 
+const char *defdemoname;
+
 //
 // G_DeferedPlayDemo
 //
 // [STRIFE] Verified unmodified
 //
 void G_DeferedPlayDemo(const char *name)
-{ 
-    defdemoname = name; 
-    gameaction = ga_playdemo; 
-} 
+{
+    defdemoname = name;
+    gameaction = ga_playdemo;
+}
 
 // Generate a string describing a demo version
 // [STRIFE] Modified to handle the one and only Strife demo version.
 static const char *DemoVersionDescription(int version)
 {
     static char resultbuf[16];
- 
-    // [STRIFE] All versions of Strife 1.1 and later use 101 as their 
+
+    // [STRIFE] All versions of Strife 1.1 and later use 101 as their
     // internal version number. Brilliant, huh? So we can't discern much
     // here.
 
     switch (version)
     {
-    case 100: 
+    case 100:
         return "v1.0"; // v1.0 would be the ancient demo version
     default:
         break;
@@ -2304,14 +2274,14 @@ static const char *DemoVersionDescription(int version)
 //
 // [STRIFE] Modified for Strife demo format.
 //
-void G_DoPlayDemo (void) 
-{ 
-    skill_t skill; 
-    int     i, map; 
-    int     demoversion;
+void G_DoPlayDemo(void)
+{
+    skill_t skill;
+    int i, map;
+    int demoversion;
 
-    gameaction = ga_nothing; 
-    demobuffer = demo_p = W_CacheLumpName (defdemoname, PU_STATIC); 
+    gameaction = ga_nothing;
+    demobuffer = demo_p = W_CacheLumpName(defdemoname, PU_STATIC);
 
     demoversion = *demo_p++;
 
@@ -2332,57 +2302,57 @@ void G_DoPlayDemo (void)
                               "(read %i, should be %i)\n"
                               "\n"
                               "*** You may need to upgrade your version "
-                                  "of Strife to v1.1 or later. ***\n"
+                              "of Strife to v1.1 or later. ***\n"
                               "    See: https://www.doomworld.com/classicdoom"
-                                        "/info/patches.php\n"
+                              "/info/patches.php\n"
                               "    This appears to be %s.";
 
         I_Error(message, demoversion, STRIFE_VERSION,
-                         DemoVersionDescription(demoversion));
+                DemoVersionDescription(demoversion));
     }
-    
-    skill = *demo_p++; 
+
+    skill = *demo_p++;
     //episode = *demo_p++; [STRIFE] No episodes
-    map = *demo_p++; 
+    map = *demo_p++;
     deathmatch = *demo_p++;
     respawnparm = *demo_p++;
     fastparm = *demo_p++;
     nomonsters = *demo_p++;
     consoleplayer = *demo_p++;
 
-    for (i=0 ; i<MAXPLAYERS ; i++) 
-        playeringame[i] = *demo_p++; 
+    for (i = 0; i < MAXPLAYERS; i++)
+        playeringame[i] = *demo_p++;
 
     //!
     // @category demo
-    // 
+    //
     // Play back a demo recorded in a netgame with a single player.
     //
 
     if (playeringame[1] || M_ParmExists("-solo-net"))
     {
-	netgame = true;
-	netdemo = true;
+        netgame = true;
+        netdemo = true;
     }
 
-    // don't spend a lot of time in loadlevel 
+    // don't spend a lot of time in loadlevel
     precache = false;
-    G_InitNew(skill, map); 
-    precache = true; 
-    
-    // [STRIFE] not here...
-    //starttime = I_GetTime (); 
+    G_InitNew(skill, map);
+    precache = true;
 
-    usergame = false; 
-    demoplayback = true; 
-} 
+    // [STRIFE] not here...
+    //starttime = I_GetTime ();
+
+    usergame = false;
+    demoplayback = true;
+}
 
 //
-// G_TimeDemo 
+// G_TimeDemo
 //
 // [STRIFE] Verified unmodified
 //
-void G_TimeDemo (char* name) 
+void G_TimeDemo(char *name)
 {
     //!
     // @category video
@@ -2393,14 +2363,13 @@ void G_TimeDemo (char* name)
 
     nodrawers = M_ParmExists("-nodraw");
 
-    timingdemo = true; 
-    singletics = true; 
+    timingdemo = true;
+    singletics = true;
 
-    defdemoname = name; 
-    gameaction = ga_playdemo; 
-} 
- 
- 
+    defdemoname = name;
+    gameaction = ga_playdemo;
+}
+
 /* 
 =================== 
 = 
@@ -2409,35 +2378,35 @@ void G_TimeDemo (char* name)
 = Called after a death or level completion to allow demos to be cleaned up 
 = Returns true if a new demo loop action will take place 
 =================== 
-*/ 
+*/
 //
 // [STRIFE] Verified unmodified
 //
-boolean G_CheckDemoStatus (void) 
-{ 
-    int             endtime; 
+boolean G_CheckDemoStatus(void)
+{
+    int endtime;
 
-    if (timingdemo) 
-    { 
+    if (timingdemo)
+    {
         float fps;
         int realtics;
 
-        endtime = I_GetTime (); 
+        endtime = I_GetTime();
         realtics = endtime - starttime;
-        fps = ((float) gametic * TICRATE) / realtics;
+        fps = ((float)gametic * TICRATE) / realtics;
 
         // Prevent recursive calls
         timingdemo = false;
         demoplayback = false;
 
-        I_Error ("timed %i gametics in %i realtics (%f fps)",
-                 gametic, realtics, fps);
-    } 
+        I_Error("timed %i gametics in %i realtics (%f fps)",
+                gametic, realtics, fps);
+    }
 
-    if (demoplayback) 
-    { 
+    if (demoplayback)
+    {
         W_ReleaseLumpName(defdemoname);
-        demoplayback = false; 
+        demoplayback = false;
         netdemo = false;
         netgame = false;
         deathmatch = false;
@@ -2446,23 +2415,23 @@ boolean G_CheckDemoStatus (void)
         fastparm = false;
         nomonsters = false;
         consoleplayer = 0;
-        
-        if (singledemo) 
-            I_Quit (); 
-        else 
-            D_AdvanceDemo (); 
 
-        return true; 
-    } 
- 
-    if (demorecording) 
-    { 
-        *demo_p++ = DEMOMARKER; 
-        M_WriteFile (demoname, demobuffer, demo_p - demobuffer); 
-        Z_Free (demobuffer); 
-        demorecording = false; 
-        I_Error ("Demo %s recorded", demoname); 
-    } 
+        if (singledemo)
+            I_Quit();
+        else
+            D_AdvanceDemo();
 
-    return false; 
-} 
+        return true;
+    }
+
+    if (demorecording)
+    {
+        *demo_p++ = DEMOMARKER;
+        M_WriteFile(demoname, demobuffer, demo_p - demobuffer);
+        Z_Free(demobuffer);
+        demorecording = false;
+        I_Error("Demo %s recorded", demoname);
+    }
+
+    return false;
+}

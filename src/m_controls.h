@@ -41,6 +41,7 @@ extern int key_invleft;
 extern int key_invright;
 extern int key_useartifact;
 
+//TODO
 // villsa [STRIFE] strife keys
 extern int key_usehealth;
 extern int key_invquery;

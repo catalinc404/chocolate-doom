@@ -176,6 +176,7 @@ static const struct
 };
 
 #define SLOWTURNTICS    6
+#define SLOWLOOkTICS     2500
 
 #define NUMKEYS 256
 boolean gamekeydown[NUMKEYS];
@@ -338,13 +339,13 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     {
         lookheld = 0;
     }
-    if (lookheld < SLOWTURNTICS)
+    if (lookheld < SLOWLOOkTICS)
     {
-        lspeed = 1;
+        lspeed = 0;
     }
     else
     {
-        lspeed = 2;
+        lspeed = 1;
     }
 
 //

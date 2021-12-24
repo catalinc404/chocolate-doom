@@ -24,6 +24,7 @@
 #include "i_system.h"
 #include "i_swap.h"
 #include "i_video.h"
+#include "i_timer.h"
 #include "m_controls.h"
 #include "m_misc.h"
 #include "p_local.h"
@@ -1188,10 +1189,13 @@ boolean MN_Responder(event_t * event)
         return true;
     }
 
+    key = -1;
+
     // Allow the menu to be activated from a joystick button if a button
     // is bound for joybmenu.
     if (event->type == ev_joystick)
     {
+        /*
         if (joybmenu >= 0 && (event->data1 & (1 << joybmenu)) != 0)
         {
             MN_ActivateMenu();
@@ -1202,17 +1206,137 @@ boolean MN_Responder(event_t * event)
             MN_ActivateMenu();
             return true;
         }
+        */
+
+        // Simulate key presses from joystick events to interact with the menu.
+
+        if (MenuActive)
+        {
+            if (event->data3 < 0)
+            {
+                key = key_menu_up;
+                joywait = I_GetTime() + 5;
+            }
+            else if (event->data3 > 0)
+            {
+                key = key_menu_down;
+                joywait = I_GetTime() + 5;
+            }
+            if (event->data2 < 0)
+            {
+                key = key_menu_left;
+                joywait = I_GetTime() + 2;
+            }
+            else if (event->data2 > 0)
+            {
+                key = key_menu_right;
+                joywait = I_GetTime() + 2;
+            }
+
+#define JOY_BUTTON_MAPPED(x) ((x) >= 0)
+#define JOY_BUTTON_PRESSED(x) (JOY_BUTTON_MAPPED(x) && (event->data1 & (1 << (x))) != 0)
+
+            if (JOY_BUTTON_PRESSED(joybup))
+            {
+                key = key_menu_up;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybdown))
+            {
+                key = key_menu_down;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybleft))
+            {
+                key = key_menu_left;
+                joywait = I_GetTime() + 5;
+            }
+            if (JOY_BUTTON_PRESSED(joybright))
+            {
+                key = key_menu_right;
+                joywait = I_GetTime() + 5;
+            }
+
+            if (JOY_BUTTON_PRESSED(joybfire))
+            {
+                if(askforquit)
+                {
+                    key = key_menu_confirm;
+                }
+                else
+                {
+                    key = key_menu_forward;
+                }
+                joywait = I_GetTime() + 5;                
+            }
+            if (JOY_BUTTON_PRESSED(joybuse))
+            {
+                if(askforquit)
+                {
+                    key = key_menu_abort;
+                }
+                else
+                {
+                    key = key_menu_back;
+                }
+                joywait = I_GetTime() + 5;
+            }
+        }
+        else
+        {
+            if (JOY_BUTTON_PRESSED(joybfire))
+            {
+                if(askforquit)
+                {
+                    key = key_menu_confirm;
+                }
+                joywait = I_GetTime() + 5;                
+            }
+            if (JOY_BUTTON_PRESSED(joybuse))
+            {
+                if(askforquit)
+                {
+                    key = key_menu_abort;
+                }
+                joywait = I_GetTime() + 5;
+            }
+        }
+
+        if (JOY_BUTTON_PRESSED(joybmenu))
+        {
+            key = key_menu_activate;
+            joywait = I_GetTime() + 5;
+        }
+        if ((joybback >= 0) && (JOY_BUTTON_PRESSED(joybback)))
+        {
+            key = key_menu_back;
+            joywait = I_GetTime() + 5;
+        }
+
+        if (joybmenu >= 0 && (event->data1 & (1 << joybmenu)) != 0)
+        {
+            MN_ActivateMenu();
+            return true;
+        }
+        if (joybback >= 0 && (event->data1 & (1 << joybback)) != 0)
+        {
+            MN_ActivateMenu();
+            return true;
+        }        
+    }
+    else
+    // Only care about keypresses beyond this point.
+    if (event->type == ev_keydown)
+    {
+        key = event->data1;
+        charTyped = event->data2;
     }
 
-    // Only care about keypresses beyond this point.
-
-    if (event->type != ev_keydown)
+    if(key == -1)
     {
         return false;
     }
 
-    key = event->data1;
-    charTyped = event->data2;
 
     if (InfoType)
     {

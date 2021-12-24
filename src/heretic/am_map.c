@@ -509,7 +509,7 @@ boolean AM_Responder(event_t * ev)
     int rc;
     int key;
     static int bigstate = 0;
-    static int joywait = 0;
+    //static int joywait = 0;
 
     key = ev->data1;
     rc = false;
